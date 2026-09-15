@@ -1,29 +1,35 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Personnel } from '../models/personnel.model';
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root'
 })
-export class PlatsService {
+export class PersonnelService {
 
-  private apiUrl = 'http://localhost:8080/plats';
+  private apiUrl = `${environment.apiUrl}/personnels`;
 
   constructor(private http: HttpClient) {}
 
-  findAll(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/find_all`);
+  findAll(): Observable<Personnel[]> {
+    return this.http.get<Personnel[]>(`${this.apiUrl}/find_all`);
   }
 
-  findById(id: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/find_by_id/${id}`);
+  findById(id: number): Observable<Personnel> {
+    return this.http.get<Personnel>(`${this.apiUrl}/find_by_id/${id}`);
   }
 
-  save(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/save`, data);
+  save(data: Personnel): Observable<Personnel> {
+    return this.http.post<Personnel>(`${this.apiUrl}/save`, data);
   }
 
-  update(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/update`, data);
+  update(data: Personnel): Observable<Personnel> {
+    return this.http.put<Personnel>(`${this.apiUrl}/update/${data.idPersonnel}`, data);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/delete/${id}`, {});
+  delete(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/delete/${id}`, {});
   }
 }

@@ -1,0 +1,11 @@
+<h2>Modifier le plat</h2>
+
+<form (ngSubmit)="update()">
+  <label>Nom :</label>
+  <input type="text" [(ngModel)]="plat.nom" name="nom">
+
+  <label>Prix :</label>
+  <input type="number" [(ngModel)]="plat.prix" name="prix">
+
+  <button type="submit">Enregistrer</button>
+</form>

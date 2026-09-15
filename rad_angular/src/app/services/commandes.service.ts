@@ -2,33 +2,34 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Commande } from '../models/commande.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
-})d4
+})
 export class CommandesService {
 
-  private apiUrl = 'http://localhost:3000/commandes';
+  private apiUrl = `${environment.apiUrl}/commandes`;
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<Commande[]> {
-    return this.http.get<Commande[]>(this.apiUrl);
+  findAll(): Observable<Commande[]> {
+    return this.http.get<Commande[]>(`${this.apiUrl}/find_all`);
   }
 
-  getById(id: number): Observable<Commande> {
-    return this.http.get<Commande>(`${this.apiUrl}/${id}`);
+  findById(id: number): Observable<Commande> {
+    return this.http.get<Commande>(`${this.apiUrl}/find_by_id/${id}`);
   }
 
-  create(data: Commande): Observable<Commande> {
-    return this.http.post<Commande>(this.apiUrl, data);
+  save(data: Commande): Observable<Commande> {
+    return this.http.post<Commande>(`${this.apiUrl}/save`, data);
   }
 
-  update(id: number, data: Commande): Observable<Commande> {
-    return this.http.put<Commande>(`${this.apiUrl}/${id}`, data);
+  update(data: Commande): Observable<Commande> {
+    return this.http.put<Commande>(`${this.apiUrl}/update/${data.idCommande}`, data);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  delete(id: number): Observable<Commande> {
+    return this.http.delete<Commande>(`${this.apiUrl}/delete/${id}`);
   }
 }

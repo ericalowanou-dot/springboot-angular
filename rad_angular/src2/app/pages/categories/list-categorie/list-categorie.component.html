@@ -1,0 +1,30 @@
+<div class="list-categorie">
+  <h2>Liste des catégories</h2>
+
+  <button routerLink="/categories/create">+ Nouvelle catégorie</button>
+
+  <div *ngIf="loading">Chargement…</div>
+  <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+
+  <table *ngIf="!loading && categories.length">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nom</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let c of categories">
+      <td>{{ c.idCategorie }}</td>
+      <td>{{ c.nom }}</td>
+      <td>
+        <button [routerLink]="['/categories/update', c.idCategorie]">Modifier</button>
+        <button (click)="deleteCategory(c.idCategorie)">Supprimer</button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!loading && categories.length === 0">Aucune catégorie trouvée</div>
+</div>

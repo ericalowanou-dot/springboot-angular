@@ -2,25 +2,23 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CommandesService } from '../../../services/commandes.service';
 
 @Component({
-  selector: 'app-create-commande',
+  selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './create-commande.component.html',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss']
 })
-export class CreateCommandeComponent {
-  commande: any = {};
+export class LoginComponent {
+  identifiant: string = '';
+  motDePasse: string = '';
 
-  constructor(
-    private commandeService: CommandesService,
-    private router: Router
-  ) {}
+  constructor(private router: Router) {}
 
-  save() {
-    this.commandeService.save(this.commande).subscribe(() => {
-      this.router.navigate(['/commandes']);
-    });
+  login() {
+    // NOTE: l'authentification a été désactivée côté backend pour ce test
+    // (tous les endpoints sont en accès libre). On redirige donc directement.
+    this.router.navigate(['/clients']);
   }
 }

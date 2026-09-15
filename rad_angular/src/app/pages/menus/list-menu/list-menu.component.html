@@ -1,0 +1,25 @@
+<h2>Liste des menus</h2>
+
+<button routerLink="/menus/create">+ Nouveau menu</button>
+
+<table border="1" width="100%">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Nom</th>
+    <th>Prix</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let m of menus">
+    <td>{{ m.idMenu }}</td>
+    <td>{{ m.nom }}</td>
+    <td>{{ m.prix }}</td>
+    <td>
+      <button (click)="edit(m.idMenu)">Modifier</button>
+      <button (click)="delete(m.idMenu)">Supprimer</button>
+    </td>
+  </tr>
+  </tbody>
+</table>

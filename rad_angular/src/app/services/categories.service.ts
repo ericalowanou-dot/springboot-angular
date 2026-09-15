@@ -1,33 +1,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Categorie } from '../models/categorie.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
-export class CategoriesService {
+export class CategorieService {
 
-  private apiUrl = 'http://localhost:8080/categorie-plats';
+  private apiUrl = `${environment.apiUrl}/categorie_plats`;
 
   constructor(private http: HttpClient) {}
 
-  findAll(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/find_all`);
+  findAll(): Observable<Categorie[]> {
+    return this.http.get<Categorie[]>(`${this.apiUrl}/find_all`);
   }
 
-  findById(id: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/find_by_id/${id}`);
+  findById(id: number): Observable<Categorie> {
+    return this.http.get<Categorie>(`${this.apiUrl}/find_by_id/${id}`);
   }
 
-  save(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/save`, data);
+  save(data: Categorie): Observable<Categorie> {
+    return this.http.post<Categorie>(`${this.apiUrl}/save`, data);
   }
 
-  update(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/update`, data);
+  update(data: Categorie): Observable<Categorie> {
+    return this.http.put<Categorie>(`${this.apiUrl}/update/${data.idCategorie}`, data);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/delete/${id}`, {});
+  delete(id: number): Observable<Categorie> {
+    return this.http.delete<Categorie>(`${this.apiUrl}/delete/${id}`);
   }
 }

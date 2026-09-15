@@ -1,0 +1,27 @@
+<h2>Liste des commandes</h2>
+
+<button routerLink="/commandes/create">+ Nouvelle commande</button>
+
+<table border="1" width="100%">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Date</th>
+    <th>État</th>
+    <th>Client</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let c of commandes">
+    <td>{{ c.idCommande }}</td>
+    <td>{{ c.date }}</td>
+    <td>{{ c.etat }}</td>
+    <td>{{ c.idClient }}</td>
+    <td>
+      <button (click)="edit(c.idCommande)">Modifier</button>
+      <button (click)="delete(c.idCommande)">Supprimer</button>
+    </td>
+  </tr>
+  </tbody>
+</table>

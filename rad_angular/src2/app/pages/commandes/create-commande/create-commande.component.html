@@ -1,0 +1,11 @@
+<h2>Créer une commande</h2>
+
+<form (ngSubmit)="save()">
+  <label>Date :</label>
+  <input type="date" [(ngModel)]="commande.date" name="date" />
+
+  <label>État :</label>
+  <input [(ngModel)]="commande.etat" name="etat" />
+
+  <button type="submit">Enregistrer</button>
+</form>

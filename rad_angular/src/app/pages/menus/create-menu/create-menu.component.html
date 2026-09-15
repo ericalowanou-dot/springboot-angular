@@ -1,0 +1,14 @@
+<h2>Créer un menu</h2>
+
+<form (ngSubmit)="save()">
+  <label>Nom :</label>
+  <input type="text" [(ngModel)]="menu.nom" name="nom">
+
+  <label>Description :</label>
+  <input type="text" [(ngModel)]="menu.description" name="description">
+
+  <label>Prix :</label>
+  <input type="number" [(ngModel)]="menu.prix" name="prix">
+
+  <button type="submit">Enregistrer</button>
+</form>

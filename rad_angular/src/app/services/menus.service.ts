@@ -2,33 +2,34 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Menu } from '../models/menu.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MenusService {
 
-  private apiUrl = 'http://localhost:3000/menus';
+  private apiUrl = `${environment.apiUrl}/menus`;
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<Menu[]> {
-    return this.http.get<Menu[]>(this.apiUrl);
+  findAll(): Observable<Menu[]> {
+    return this.http.get<Menu[]>(`${this.apiUrl}/find_all`);
   }
 
-  getById(id: number): Observable<Menu> {
-    return this.http.get<Menu>(`${this.apiUrl}/${id}`);
+  findById(id: number): Observable<Menu> {
+    return this.http.get<Menu>(`${this.apiUrl}/find_by_id/${id}`);
   }
 
-  create(data: Menu): Observable<Menu> {
-    return this.http.post<Menu>(this.apiUrl, data);
+  save(data: Menu): Observable<Menu> {
+    return this.http.post<Menu>(`${this.apiUrl}/save`, data);
   }
 
-  update(id: number, data: Menu): Observable<Menu> {
-    return this.http.put<Menu>(`${this.apiUrl}/${id}`, data);
+  update(data: Menu): Observable<Menu> {
+    return this.http.put<Menu>(`${this.apiUrl}/update/${data.idMenu}`, data);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  delete(id: number): Observable<Menu> {
+    return this.http.delete<Menu>(`${this.apiUrl}/delete/${id}`);
   }
 }

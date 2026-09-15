@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Categorie } from '../../../models/categorie.model';
-import { CategoriePlatService } from '../../../services/categorie-plat.service';
+import { CategorieService } from '../../../services/categories.service';
 
 @Component({
   selector: 'app-list-categorie',
@@ -13,7 +13,7 @@ export class ListCategorieComponent implements OnInit {
   loading = false;
   errorMessage?: string;
 
-  constructor(private categorieService: CategoriePlatService) {}
+  constructor(private categorieService: CategorieService) {}
 
   ngOnInit(): void {
     this.loadCategories();

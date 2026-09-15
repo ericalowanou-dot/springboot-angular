@@ -2,33 +2,34 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Client } from '../models/client.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClientsService {
 
-  private apiUrl = 'http://localhost:3000/clients';
+  private apiUrl = `${environment.apiUrl}/clients`;
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<Client[]> {
-    return this.http.get<Client[]>(this.apiUrl);
+  findAll(): Observable<Client[]> {
+    return this.http.get<Client[]>(`${this.apiUrl}/find_all`);
   }
 
-  getById(id: number): Observable<Client> {
-    return this.http.get<Client>(`${this.apiUrl}/${id}`);
+  findById(id: number): Observable<Client> {
+    return this.http.get<Client>(`${this.apiUrl}/find_by_id/${id}`);
   }
 
-  create(data: Client): Observable<Client> {
-    return this.http.post<Client>(this.apiUrl, data);
+  save(data: Client): Observable<Client> {
+    return this.http.post<Client>(`${this.apiUrl}/save`, data);
   }
 
-  update(id: number, data: Client): Observable<Client> {
-    return this.http.put<Client>(`${this.apiUrl}/${id}`, data);
+  update(data: Client): Observable<Client> {
+    return this.http.put<Client>(`${this.apiUrl}/update/${data.idClient}`, data);
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  delete(id: number): Observable<Client> {
+    return this.http.delete<Client>(`${this.apiUrl}/delete/${id}`);
   }
 }

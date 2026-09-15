@@ -1,0 +1,11 @@
+<h2>Modifier la commande</h2>
+
+<form (ngSubmit)="update()">
+  <label>État :</label>
+  <input type="text" [(ngModel)]="commande.etat" name="etat">
+
+  <label>Date :</label>
+  <input type="text" [(ngModel)]="commande.date" name="date">
+
+  <button type="submit">Enregistrer</button>
+</form>
