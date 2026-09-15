@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlatService } from '../../../services/plats.service';
 
 @Component({
   selector: 'app-update-plat',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './update-plat.component.html',
   styleUrls: ['./update-plat.component.css']
 })

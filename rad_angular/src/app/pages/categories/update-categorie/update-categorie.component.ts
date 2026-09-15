@@ -1,10 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { CategorieService } from '../../../services/categories.service';
 import { Categorie } from '../../../models/categorie.model';
 
 @Component({
   selector: 'app-update-categorie',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './update-categorie.component.html',
   styleUrls: ['./update-categorie.component.css']
 })

@@ -1,8 +1,12 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { PlatService } from '../../../services/plats.service';
 
 @Component({
   selector: 'app-list-plat',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './list-plat.component.html',
   styleUrls: ['./list-plat.component.css']
 })

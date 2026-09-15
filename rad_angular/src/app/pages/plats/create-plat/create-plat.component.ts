@@ -1,15 +1,19 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { PlatService } from '../../../services/plats.service';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-create-plat',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './create-plat.component.html',
   styleUrls: ['./create-plat.component.css']
 })
 export class CreatePlatComponent {
 
-  plat = {
+  plat: any = {
     nom: "",
     prix: 0
   };

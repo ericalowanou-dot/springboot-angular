@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { Categorie } from '../../../models/categorie.model';
 import { CategorieService } from '../../../services/categories.service';
 
 @Component({
   selector: 'app-list-categorie',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './list-categorie.component.html',
   styleUrls: ['./list-categorie.component.scss']
 })
