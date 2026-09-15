@@ -1,0 +1,11 @@
+<h2>Modifier la catégorie</h2>
+
+<form (ngSubmit)="update()">
+
+  <label>Nom :</label>
+  <input type="text" [(ngModel)]="categorie.nom" name="nom">
+
+  <button type="submit">Mettre à jour</button>
+  <button type="button" routerLink="/categories">Annuler</button>
+
+</form>

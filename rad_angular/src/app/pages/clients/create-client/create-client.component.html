@@ -1,0 +1,14 @@
+<h2>Créer un client</h2>
+
+<form (ngSubmit)="save()">
+  <label>Nom :</label>
+  <input [(ngModel)]="client.nom" name="nom" />
+
+  <label>Prénom :</label>
+  <input [(ngModel)]="client.prenom" name="prenom" />
+
+  <label>Email :</label>
+  <input [(ngModel)]="client.email" name="email" />
+
+  <button type="submit">Enregistrer</button>
+</form>

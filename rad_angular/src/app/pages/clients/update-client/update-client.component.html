@@ -1,0 +1,14 @@
+<h2>Modifier le client</h2>
+
+<form (ngSubmit)="update()">
+  <label>Nom :</label>
+  <input [(ngModel)]="client.nom" name="nom" />
+
+  <label>Prénom :</label>
+  <input [(ngModel)]="client.prenom" name="prenom" />
+
+  <label>Email :</label>
+  <input [(ngModel)]="client.email" name="email" />
+
+  <button type="submit">Mettre à jour</button>
+</form>
