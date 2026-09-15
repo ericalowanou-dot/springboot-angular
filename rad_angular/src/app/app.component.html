@@ -1,2 +1,9 @@
-<router-outlet></router-outlet>
-
+<nav class="main-nav" *ngIf="!isLoginPage()">
+    <a routerLink="/clients" routerLinkActive="active">Clients</a>
+    <a routerLink="/categories" routerLinkActive="active">Catégories</a>
+    <a routerLink="/plats" routerLinkActive="active">Plats</a>
+    <a routerLink="/commandes" routerLinkActive="active">Commandes</a>
+    <a routerLink="/menus" routerLinkActive="active">Menus</a>
+  </nav>
+  
+  <router-outlet></router-outlet>
