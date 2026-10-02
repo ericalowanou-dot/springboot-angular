@@ -83,6 +83,15 @@
   flex: 1;
 }
 
+.en-ligne {
+  margin-left: 6px;
+}
+
+.lien-tel {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
 .danger-text {
   color: var(--danger);
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CommandeRepository extends JpaRepository<Commande, Integer> {
@@ -19,4 +20,8 @@ public interface CommandeRepository extends JpaRepository<Commande, Integer> {
     List<Commande> findAllByDateCommandeBetween(LocalDate debut, LocalDate fin);
 
     long countByClientIdClient(Integer idClient);
+
+    Optional<Commande> findByCodeSuivi(String codeSuivi);
+
+    boolean existsByCodeSuivi(String codeSuivi);
 }

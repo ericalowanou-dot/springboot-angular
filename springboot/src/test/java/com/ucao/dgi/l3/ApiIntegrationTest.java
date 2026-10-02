@@ -178,6 +178,53 @@ class ApiIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void commandeEnLigneSansCompteEtSuiviParCode() throws Exception {
+        int plat = creerPlat("Riz au gras", 3000);
+        String tokenAdmin = token;
+        token = null; // le client n'est pas connecté
+
+        appel(post("/api/public/commandes"), """
+                {"type":"SUR_PLACE","nom":"Ama","telephone":"90112233","lignes":[{"platId":%d,"quantite":1}]}
+                """.formatted(plat), 409);
+        appel(post("/api/public/commandes"), """
+                {"type":"LIVRAISON","nom":"Ama","telephone":"abc","lignes":[{"platId":%d,"quantite":1}]}
+                """.formatted(plat), 400);
+
+        JsonNode recu = appel(post("/api/public/commandes"), """
+                {"type":"LIVRAISON","nom":"Ama Kouassi","telephone":"+228 90 11 22 33","adresse":"Tokoin",
+                 "montantTotal":1,"lignes":[{"platId":%d,"quantite":2}]}
+                """.formatted(plat), 201);
+        String code = recu.get("codeSuivi").asText();
+        assertThat(code).hasSize(8);
+        assertThat(recu.get("montantTotal").asDouble()).isEqualTo(6000.0);
+
+        // suivi public : statut et contenu, sans données personnelles
+        JsonNode suivi = appel(get("/api/public/commandes/" + code.toLowerCase()), null, 200);
+        assertThat(suivi.get("statut").asText()).isEqualTo("EN_ATTENTE");
+        assertThat(suivi.get("statutLivraison").asText()).isEqualTo("A_ASSIGNER");
+        assertThat(suivi.toString()).doesNotContain("90 11 22 33").doesNotContain("Tokoin");
+        appel(get("/api/public/commandes/INCONNU1"), null, 404);
+        // le reste de l'API reste fermé
+        appel(get("/api/commandes"), null, 401);
+
+        // l'équipe voit la commande en ligne avec les coordonnées du client
+        token = tokenAdmin;
+        JsonNode cote = appel(get("/api/commandes/" + recu.get("numero").asInt()), null, 200);
+        assertThat(cote.get("enLigne").asBoolean()).isTrue();
+        assertThat(cote.get("nomContact").asText()).isEqualTo("Ama Kouassi");
+        assertThat(cote.get("livraison").get("adresseDestination").asText()).isEqualTo("Tokoin");
+
+        // anti-abus : 5 commandes par IP et par fenêtre de 10 minutes (2 déjà comptées ci-dessus)
+        token = null;
+        String corps = "{\"type\":\"A_EMPORTER\",\"nom\":\"Robot\",\"telephone\":\"90000000\",\"lignes\":[{\"platId\":%d,\"quantite\":1}]}"
+                .formatted(plat);
+        for (int i = 0; i < 3; i++) {
+            appel(post("/api/public/commandes"), corps, 201);
+        }
+        appel(post("/api/public/commandes"), corps, 429);
+    }
+
     private String jeton(String email, String motDePasse) throws Exception {
         String reponse = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, motDePasse)))

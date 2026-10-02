@@ -4,28 +4,41 @@
     <strong>Le Gourmet</strong>
   </div>
   <div class="row">
+    <a routerLink="/suivi" class="btn btn-ghost btn-sm hide-sm"><app-icon name="search" [size]="14" /> Suivre une commande</a>
     <button class="icon-btn" (click)="theme.basculer()" aria-label="Changer de thème">
       <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
     </button>
+    <button class="btn btn-primary btn-sm panier-btn" (click)="panierOuvert.set(true)" aria-label="Ouvrir le panier">
+      <app-icon name="bag" [size]="16" />
+      @if (panier.nbArticles()) {
+        <span class="pastille">{{ panier.nbArticles() }}</span>
+      }
+    </button>
     @if (auth.connecte()) {
-      <a routerLink="/dashboard" class="btn btn-secondary btn-sm">Mon espace</a>
-    } @else {
-      <a routerLink="/login" class="btn btn-secondary btn-sm">Espace personnel</a>
+      <a [routerLink]="auth.accueil()" class="btn btn-secondary btn-sm hide-sm">Mon espace</a>
     }
   </div>
 </header>
 
 <section class="banner">
   <p class="eyebrow">Cuisine togolaise & africaine</p>
-  <h1>Notre carte</h1>
-  <p>Des plats préparés chaque jour avec des produits frais du marché.</p>
+  <h1>Commandez en ligne</h1>
+  <p>À emporter ou livré chez vous · paiement au retrait ou à la livraison.</p>
 </section>
 
 <div class="contenu">
+  @if (panier.dernierCode(); as code) {
+    <a class="suivi-encart" [routerLink]="['/suivi', code]">
+      <app-icon name="clock" [size]="20" />
+      <span class="grow"><strong>Vous avez une commande en cours</strong><br /><small>Code {{ code }} · voir son avancement</small></span>
+      <app-icon name="chevron-right" [size]="18" />
+    </a>
+  }
+
   @if (chargement()) {
     <div class="cards">
       @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-        <div class="skeleton" style="height: 280px"></div>
+        <div class="skeleton" style="height: 300px"></div>
       }
     </div>
   } @else if (erreur()) {
@@ -35,8 +48,52 @@
       <p>Le serveur ne répond pas pour le moment. Réessayez dans quelques instants.</p>
     </div>
   } @else {
+    <div class="filtres">
+      <button class="filtre" [class.active]="filtre() === null" (click)="filtre.set(null)">Tout</button>
+      @for (c of categories(); track c.idCategorie) {
+        <button class="filtre" [class.active]="filtre() === c.idCategorie" (click)="filtre.set(c.idCategorie ?? null)">
+          {{ emoji(c.nom) }} {{ c.nom }}
+        </button>
+      }
+    </div>
+
+    <div class="cards">
+      @for (p of platsAffiches(); track p.idPlat) {
+        <article class="dish card" [class.dans-panier]="panier.quantite(p.idPlat)">
+          @if (p.imageUrl | img; as src) {
+            <img class="dish-visual" [src]="src" [alt]="p.nom" loading="lazy" />
+          } @else {
+            <div class="dish-visual">{{ emoji(p.categorie?.nom) }}</div>
+          }
+          <div class="dish-body">
+            <div class="row between">
+              <h3>{{ p.nom }}</h3>
+              <span class="prix">{{ p.prix | fcfa }}</span>
+            </div>
+            <p>{{ p.description }}</p>
+            @if (panier.quantite(p.idPlat); as q) {
+              <div class="stepper">
+                <button (click)="panier.changer(p.idPlat!, -1)" aria-label="Retirer un"><app-icon name="minus" [size]="16" /></button>
+                <span>{{ q }} dans le panier</span>
+                <button (click)="ajouter(p)" aria-label="Ajouter un"><app-icon name="plus" [size]="16" /></button>
+              </div>
+            } @else {
+              <button class="btn btn-secondary btn-block ajouter" (click)="ajouter(p)">
+                <app-icon name="plus" [size]="16" /> Ajouter
+              </button>
+            }
+          </div>
+        </article>
+      } @empty {
+        <div class="empty card" style="grid-column: 1 / -1">
+          <span class="empty-icon"><app-icon name="utensils" [size]="26" /></span>
+          <h3>Aucun plat pour le moment</h3>
+        </div>
+      }
+    </div>
+
     @if (menus().length) {
-      <h2 class="section-titre">Nos formules</h2>
+      <h2 class="section-titre">Nos formules <small>servies au restaurant</small></h2>
       <div class="menus">
         @for (m of menus(); track m.idMenu) {
           <article class="menu-card">
@@ -59,45 +116,96 @@
         }
       </div>
     }
-
-    <h2 class="section-titre">À la carte</h2>
-    <div class="filtres">
-      <button class="filtre" [class.active]="filtre() === null" (click)="filtre.set(null)">Tout</button>
-      @for (c of categories(); track c.idCategorie) {
-        <button
-          class="filtre"
-          [class.active]="filtre() === c.idCategorie"
-          (click)="filtre.set(c.idCategorie ?? null)"
-        >
-          {{ emoji(c.nom) }} {{ c.nom }}
-        </button>
-      }
-    </div>
-
-    <div class="cards">
-      @for (p of platsAffiches(); track p.idPlat) {
-        <article class="dish card">
-          @if (p.imageUrl | img; as src) {
-            <img class="dish-visual" [src]="src" [alt]="p.nom" loading="lazy" />
-          } @else {
-            <div class="dish-visual">{{ emoji(p.categorie?.nom) }}</div>
-          }
-          <div class="dish-body">
-            <div class="row between">
-              <h3>{{ p.nom }}</h3>
-              <span class="prix">{{ p.prix | fcfa }}</span>
-            </div>
-            <p>{{ p.description }}</p>
-          </div>
-        </article>
-      } @empty {
-        <div class="empty card" style="grid-column: 1 / -1">
-          <span class="empty-icon"><app-icon name="utensils" [size]="26" /></span>
-          <h3>Aucun plat pour le moment</h3>
-        </div>
-      }
-    </div>
   }
 </div>
 
-<footer class="pied">© Le Gourmet · Lomé — Ouvert tous les jours de 11h à 23h</footer>
+@if (panier.nbArticles() && !panierOuvert()) {
+  <button class="barre-panier" (click)="panierOuvert.set(true)">
+    <span class="pastille-blanche">{{ panier.nbArticles() }}</span>
+    <span class="grow">Voir mon panier</span>
+    <strong>{{ panier.total() | fcfa }}</strong>
+  </button>
+}
+
+<footer class="pied">
+  © Le Gourmet · Lomé — Ouvert tous les jours de 11h à 23h ·
+  <a routerLink="/suivi">Suivre une commande</a>
+</footer>
+
+@if (panierOuvert()) {
+  <app-modal titre="Mon panier" [sousTitre]="panier.nbArticles() + ' article(s)'" (fermer)="panierOuvert.set(false)">
+    @if (!panier.lignes().length) {
+      <div class="empty">
+        <span class="empty-icon"><app-icon name="bag" [size]="26" /></span>
+        <h3>Votre panier est vide</h3>
+        <p>Ajoutez des plats depuis la carte.</p>
+      </div>
+    } @else {
+      <div class="lignes">
+        @for (l of panier.lignes(); track l.platId) {
+          <div class="ligne">
+            <span class="emoji">{{ emoji(l.categorie) }}</span>
+            <div class="grow">
+              <div class="strong">{{ l.nom }}</div>
+              <div class="small muted">{{ l.prix | fcfa }}</div>
+            </div>
+            <div class="stepper mini">
+              <button (click)="panier.changer(l.platId, -1)" aria-label="Retirer un"><app-icon name="minus" [size]="14" /></button>
+              <span>{{ l.quantite }}</span>
+              <button (click)="panier.changer(l.platId, 1)" aria-label="Ajouter un"><app-icon name="plus" [size]="14" /></button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <form #ngf="ngForm" class="form" id="form-commande" (ngSubmit)="commander(ngf)">
+        <div class="modes">
+          <button type="button" class="mode" [class.on]="coord.type === 'A_EMPORTER'" (click)="coord.type = 'A_EMPORTER'">
+            <app-icon name="bag" [size]="20" /> À emporter
+          </button>
+          <button type="button" class="mode" [class.on]="coord.type === 'LIVRAISON'" (click)="coord.type = 'LIVRAISON'">
+            <app-icon name="truck" [size]="20" /> Livraison
+          </button>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="c-nom">Votre nom</label>
+            <input id="c-nom" class="input" name="nom" required minlength="2" maxlength="60" autocomplete="name" [(ngModel)]="coord.nom" />
+          </div>
+          <div class="field">
+            <label for="c-tel">Téléphone</label>
+            <input id="c-tel" class="input" type="tel" name="telephone" required pattern="^\+?[0-9 .\-]{8,20}$" autocomplete="tel" placeholder="+228 90 00 00 00" [(ngModel)]="coord.telephone" />
+          </div>
+        </div>
+        @if (coord.type === 'LIVRAISON') {
+          <div class="field">
+            <label for="c-adr">Adresse de livraison</label>
+            <input id="c-adr" class="input" name="adresse" maxlength="255" autocomplete="street-address" placeholder="Quartier, rue, point de repère…" [(ngModel)]="coord.adresse" />
+          </div>
+        }
+        <div class="field">
+          <label for="c-notes">Précisions (facultatif)</label>
+          <input id="c-notes" class="input" name="notes" maxlength="255" placeholder="Allergies, cuisson, sonnette…" [(ngModel)]="coord.notes" />
+        </div>
+        <div class="recap">
+          <div class="row between"><span>Total</span><strong class="total">{{ panier.total() | fcfa }}</strong></div>
+          <p class="small muted">
+            Paiement {{ coord.type === 'LIVRAISON' ? 'à la livraison' : 'au retrait' }} (espèces ou Mobile Money).
+            Le restaurant peut vous appeler pour confirmer.
+          </p>
+        </div>
+      </form>
+    }
+    <div pied>
+      <button class="btn btn-secondary" (click)="panierOuvert.set(false)">Continuer mes achats</button>
+      @if (panier.lignes().length) {
+        <button class="btn btn-primary" type="submit" form="form-commande" [disabled]="envoi()">
+          @if (envoi()) {
+            <span class="spinner"></span>
+          }
+          Commander · {{ panier.total() | fcfa }}
+        </button>
+      }
+    </div>
+  </app-modal>
+}

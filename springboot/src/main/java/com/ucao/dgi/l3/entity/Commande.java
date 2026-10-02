@@ -44,6 +44,20 @@ public class Commande implements Serializable {
     /** Calculé côté serveur à partir des lignes, jamais fourni par le client HTTP. */
     private Double montantTotal;
 
+    /** Commande passée par le client lui-même depuis la carte en ligne. */
+    private Boolean enLigne = false;
+
+    /** Code communiqué au client pour suivre sa commande en ligne (ex. K7M3Q9TX). */
+    @Column(length = 12, unique = true)
+    private String codeSuivi;
+
+    /** Coordonnées saisies en ligne (le client n'a pas forcément de fiche). */
+    @Column(length = 60)
+    private String nomContact;
+
+    @Column(length = 30)
+    private String telephoneContact;
+
     // Plusieurs commandes appartiennent à un seul client (optionnel pour une commande au comptoir)
     @ManyToOne
     @JoinColumn(name = "id_client")

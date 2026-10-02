@@ -9,6 +9,7 @@ import {
   Categorie,
   Client,
   Commande,
+  CommandeEnLigneRequest,
   CommandeRequest,
   Dashboard,
   Fournisseur,
@@ -20,6 +21,7 @@ import {
   ProduitRequest,
   StatutCommande,
   StatutLivraison,
+  SuiviCommande,
   Utilisateur,
   UtilisateurRequest,
 } from './models';
@@ -128,6 +130,17 @@ export class ApiService {
         this.http.post<Approvisionnement>(`${this.base}/approvisionnements/${id}/annulation`, null),
     },
   );
+
+  /** Routes publiques : commande en ligne par un client et suivi par code. */
+  readonly enLigne = {
+    commander: (data: CommandeEnLigneRequest) =>
+      this.http.post<{ codeSuivi: string; numero: number; montantTotal: number }>(
+        `${this.base}/public/commandes`,
+        data,
+      ),
+    suivre: (code: string) =>
+      this.http.get<SuiviCommande>(`${this.base}/public/commandes/${encodeURIComponent(code)}`),
+  };
 
   dashboard(): Observable<Dashboard> {
     return this.http.get<Dashboard>(`${this.base}/dashboard`);

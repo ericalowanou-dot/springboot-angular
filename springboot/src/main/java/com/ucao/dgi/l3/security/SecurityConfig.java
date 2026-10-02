@@ -27,7 +27,8 @@ import java.util.List;
 
 /**
  * Règles d'accès :
- * - public : connexion, consultation de la carte (plats, catégories, menus) et des images ;
+ * - public : connexion, consultation de la carte (plats, catégories, menus) et des images,
+ *   commande en ligne et suivi par code ;
  * - ADMIN : gestion des comptes utilisateurs ;
  * - ADMIN / GERANT : catalogue, personnel (dont les accès livreur), stocks, fournisseurs, suppressions ;
  * - ADMIN / GERANT / EMPLOYE : commandes, clients, livraisons, tableau de bord ;
@@ -57,6 +58,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/health", "/error").permitAll()
+                        // commande en ligne et suivi par code, sans compte (limité par LimiteurRequetes)
+                        .requestMatchers(HttpMethod.POST, "/api/public/commandes").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/public/commandes/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/images/**", "/api/plats/**",
                                 "/api/categories/**", "/api/menus/**").permitAll()
                         .requestMatchers("/api/auth/**").authenticated()

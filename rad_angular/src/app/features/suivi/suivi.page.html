@@ -1,0 +1,106 @@
+<header class="nav">
+  <a routerLink="/carte" class="brand">
+    <span class="logo"><app-icon name="chef" [size]="20" /></span>
+    <strong>Le Gourmet</strong>
+  </a>
+  <div class="row">
+    <button class="icon-btn" (click)="theme.basculer()" aria-label="Changer de thème">
+      <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+    </button>
+    <a routerLink="/carte" class="btn btn-secondary btn-sm"><app-icon name="book" [size]="14" /> La carte</a>
+  </div>
+</header>
+
+<main class="contenu">
+  @if (nouvelle() && suivi(); as s) {
+    <div class="merci">
+      <span class="coche"><app-icon name="check" [size]="28" [stroke]="2.5" /></span>
+      <div>
+        <h1>Merci, commande envoyée !</h1>
+        <p>Gardez ce code pour suivre votre commande : <strong class="code">{{ s.codeSuivi }}</strong></p>
+      </div>
+    </div>
+  }
+
+  @if (!code()) {
+    <section class="card card-pad recherche">
+      <h1>Suivre ma commande</h1>
+      <p class="muted">Saisissez le code reçu après votre commande en ligne.</p>
+      <form class="row" (ngSubmit)="rechercher()">
+        <input class="input code-input" name="code" maxlength="12" placeholder="Ex. K7M3Q9TX" [(ngModel)]="saisie" autocomplete="off" />
+        <button class="btn btn-primary" type="submit">Suivre</button>
+      </form>
+    </section>
+  } @else if (introuvable()) {
+    <section class="card empty">
+      <span class="empty-icon"><app-icon name="search" [size]="26" /></span>
+      <h3>Aucune commande avec le code « {{ code() }} »</h3>
+      <p>Vérifiez le code, ou contactez le restaurant.</p>
+      <a routerLink="/suivi" class="btn btn-secondary">Saisir un autre code</a>
+    </section>
+  } @else if (suivi(); as s) {
+    <section class="card card-pad">
+      <div class="row between entete">
+        <div>
+          <span class="small muted">Commande n° {{ s.numero }} · code {{ s.codeSuivi }}</span>
+          <h2>{{ livraison() ? 'Livraison à domicile' : 'À emporter' }}</h2>
+          <span class="small muted">Passée le {{ s.creeLe | date: "d MMMM 'à' HH:mm" }}</span>
+        </div>
+        @if (!terminee()) {
+          <span class="live"><span class="point"></span> Suivi en direct</span>
+        }
+      </div>
+
+      @if (annulee()) {
+        <div class="alerte danger"><app-icon name="ban" [size]="20" /> Cette commande a été annulée. Contactez le restaurant pour plus d'informations.</div>
+      } @else {
+        @if (echec()) {
+          <div class="alerte warning">
+            <app-icon name="alert" [size]="20" /> Le livreur n'a pas pu vous remettre la commande. Le restaurant va vous recontacter.
+          </div>
+        }
+        <ol class="etapes">
+          @for (e of etapes(); track e.libelle; let i = $index) {
+            <li [class.faite]="i < etapeCourante() || (terminee() && i === etapeCourante())" [class.active]="i === etapeCourante() && !terminee()">
+              <span class="pastille"><app-icon [name]="i < etapeCourante() || terminee() ? 'check' : e.icone" [size]="16" /></span>
+              <div>
+                <strong>{{ e.libelle }}</strong>
+                @if (i === etapeCourante()) {
+                  <p>
+                    {{ e.detail }}
+                    @if (livraison() && i === 3 && s.heureDepart) {
+                      · parti à {{ s.heureDepart | date: 'HH:mm' }}
+                    }
+                  </p>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+      }
+    </section>
+
+    <section class="card card-pad mt">
+      <h3 class="titre">Récapitulatif</h3>
+      @for (l of s.lignes; track $index) {
+        <div class="row between ligne">
+          <span><strong>{{ l.quantite }}×</strong> {{ l.plat }}</span>
+          <span class="nowrap">{{ l.sousTotal | fcfa }}</span>
+        </div>
+      }
+      <div class="row between total">
+        <span>Total</span>
+        <strong>{{ s.montantTotal | fcfa }}</strong>
+      </div>
+      <p class="small" [class.paye]="s.payee">
+        @if (s.payee) {
+          ✅ Commande réglée
+        } @else {
+          Paiement {{ livraison() ? 'à la livraison' : 'au retrait' }}
+        }
+      </p>
+    </section>
+  } @else {
+    <div class="skeleton" style="height: 360px"></div>
+  }
+</main>

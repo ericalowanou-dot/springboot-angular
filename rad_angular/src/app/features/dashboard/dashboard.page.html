@@ -126,7 +126,7 @@
               @for (c of d.dernieresCommandes; track c.idCommande) {
                 <tr>
                   <td class="strong">#{{ c.idCommande }}</td>
-                  <td>{{ c.client ? c.client.prenom + ' ' + c.client.nom : 'Client de passage' }}</td>
+                  <td>{{ nomClient(c) }}@if (c.enLigne) { <span class="badge primary plain">En ligne</span> }</td>
                   <td class="hide-sm muted">{{ c.type | libelle: 'type' }}</td>
                   <td><span class="badge {{ statuts[c.statut ?? '']?.ton }}">{{ c.statut | libelle: 'statut' }}</span></td>
                   <td class="right strong nowrap">{{ c.montantTotal | fcfa }}</td>

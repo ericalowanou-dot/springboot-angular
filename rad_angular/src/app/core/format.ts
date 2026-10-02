@@ -54,6 +54,15 @@ export function emojiCategorie(nom?: string | null): string {
   return '🍽️';
 }
 
+/** Nom à afficher pour une commande : fiche client, sinon coordonnées saisies en ligne. */
+export function nomClient(c: {
+  client?: { prenom: string; nom: string } | null;
+  nomContact?: string | null;
+}): string {
+  if (c.client) return `${c.client.prenom} ${c.client.nom}`;
+  return c.nomContact || 'Client de passage';
+}
+
 export function initiales(prenom?: string | null, nom?: string | null): string {
   return `${(prenom ?? '').charAt(0)}${(nom ?? '').charAt(0)}`.toUpperCase() || '?';
 }

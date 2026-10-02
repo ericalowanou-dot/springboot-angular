@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
-import { FcfaPipe, ImagePipe, LibellePipe, STATUTS, emojiCategorie, fcfa } from '../../core/format';
+import { FcfaPipe, ImagePipe, LibellePipe, STATUTS, emojiCategorie, fcfa, nomClient } from '../../core/format';
 import { Dashboard } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../ui/icon.component';
@@ -24,6 +24,7 @@ export class DashboardPage {
   protected aujourdHui = new Date();
   protected statuts = STATUTS;
   protected emoji = emojiCategorie;
+  protected nomClient = nomClient;
 
   protected salutation = this.aujourdHui.getHours() < 18 ? 'Bonjour' : 'Bonsoir';
 

@@ -1,11 +1,11 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ConfirmService } from '../../core/confirm.service';
-import { FcfaPipe, LibellePipe, STATUTS } from '../../core/format';
+import { FcfaPipe, LibellePipe, STATUTS, nomClient } from '../../core/format';
 import { Commande, StatutCommande } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../ui/icon.component';
@@ -42,6 +42,7 @@ export class CommandesPage {
   protected auth = inject(AuthService);
 
   protected statuts = STATUTS;
+  protected nomClient = nomClient;
   protected filtres = FILTRES;
   protected commandes = signal<Commande[] | null>(null);
   protected filtre = signal<Filtre>('EN_COURS');
@@ -68,16 +69,26 @@ export class CommandesPage {
 
   constructor() {
     this.charger();
+    // les commandes passées en ligne arrivent sans recharger la page
+    const minuteur = setInterval(() => this.charger(true), 30_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(minuteur));
   }
 
-  charger(): void {
+  charger(silencieux = false): void {
+    const avant = new Set((this.commandes() ?? []).map((c) => c.idCommande));
     this.api.commandes.liste().subscribe({
       next: (l) => {
+        const nouvelles = this.commandes() ? l.filter((c) => c.enLigne && !avant.has(c.idCommande)) : [];
+        if (nouvelles.length) {
+          this.toasts.info(`🛎️ ${nouvelles.length} nouvelle(s) commande(s) en ligne`);
+        }
         this.commandes.set(l);
         const sel = this.selection();
         if (sel) this.selection.set(l.find((c) => c.idCommande === sel.idCommande) ?? null);
       },
-      error: (e) => this.toasts.erreur(e),
+      error: (e) => {
+        if (!silencieux) this.toasts.erreur(e);
+      },
     });
   }
 

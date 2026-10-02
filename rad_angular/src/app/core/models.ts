@@ -117,6 +117,33 @@ export interface Commande {
   paiement?: Paiement | null;
   livraison?: Livraison | null;
   payee: boolean;
+  enLigne?: boolean | null;
+  codeSuivi?: string | null;
+  nomContact?: string | null;
+  telephoneContact?: string | null;
+}
+
+export interface CommandeEnLigneRequest {
+  type: 'A_EMPORTER' | 'LIVRAISON';
+  nom: string;
+  telephone: string;
+  adresse?: string | null;
+  notes?: string | null;
+  lignes: { platId: number; quantite: number }[];
+}
+
+export interface SuiviCommande {
+  codeSuivi: string;
+  numero: number;
+  statut: StatutCommande | null;
+  type: TypeCommande | null;
+  creeLe: string | null;
+  montantTotal: number;
+  payee: boolean;
+  lignes: { plat: string; quantite: number; sousTotal: number }[];
+  statutLivraison: StatutLivraison | null;
+  heureDepart: string | null;
+  heureFin: string | null;
 }
 
 export interface CommandeRequest {

@@ -15,6 +15,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/carte/carte.page').then((m) => m.CartePage),
   },
   {
+    path: 'suivi',
+    title: 'Suivre ma commande · Le Gourmet',
+    loadComponent: () => import('./features/suivi/suivi.page').then((m) => m.SuiviPage),
+  },
+  {
+    path: 'suivi/:code',
+    title: 'Suivre ma commande · Le Gourmet',
+    loadComponent: () => import('./features/suivi/suivi.page').then((m) => m.SuiviPage),
+  },
+  {
     path: 'livreur',
     title: 'Mes livraisons · Le Gourmet',
     canActivate: [authGuard, roleGuard('LIVREUR')],

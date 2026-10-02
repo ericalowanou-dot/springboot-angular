@@ -74,12 +74,14 @@
           <span class="petit-lien">Itinéraire <app-icon name="external" [size]="14" /></span>
         </a>
 
-        @if (l.commande?.client; as c) {
-          <a class="ligne-action" [href]="lienTel(c.telephone)">
-            <app-icon name="phone" [size]="18" />
-            <span class="grow">{{ c.prenom }} {{ c.nom }}</span>
-            <span class="petit-lien">{{ c.telephone }}</span>
-          </a>
+        @if (l.commande; as cmd) {
+          @if (cmd.telephoneContact || cmd.client?.telephone; as tel) {
+            <a class="ligne-action" [href]="lienTel(tel)">
+              <app-icon name="phone" [size]="18" />
+              <span class="grow">{{ nomClient(cmd) }}</span>
+              <span class="petit-lien">{{ tel }}</span>
+            </a>
+          }
         }
 
         <ul class="plats">

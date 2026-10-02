@@ -60,6 +60,14 @@ Cycle d'une livraison : **À assigner → Assignée** (livreur choisi) **→ En 
 
 La carte (`GET /api/plats`, `/api/categories`, `/api/menus`) et les images sont publiques.
 
+### Commande en ligne (client sans compte)
+
+Sur la carte publique (`/carte`), le client ajoute des plats à son panier, choisit **À emporter** ou **Livraison**,
+indique son nom et son téléphone, puis reçoit un **code de suivi** (page `/suivi/CODE`, actualisée en direct).
+La commande arrive dans l'écran Commandes de l'équipe avec le badge « En ligne ». Le prix est recalculé par le
+serveur, la fiche client est retrouvée par le numéro de téléphone, et chaque adresse IP est limitée à
+5 commandes par tranche de 10 minutes. Le paiement se fait au retrait ou à la livraison.
+
 ## Configuration de l'API (variables d'environnement)
 
 | Variable | Défaut (dev) | Rôle |
@@ -84,6 +92,7 @@ Toutes les routes sont préfixées par `/api`. Les erreurs ont toujours le forma
 | Méthode | Route | Description |
 |---|---|---|
 | POST | `/auth/login` | Connexion, renvoie le jeton JWT |
+| POST · GET | `/public/commandes`, `/public/commandes/{code}` | Commande en ligne sans compte · suivi par code |
 | GET | `/auth/me` · PUT `/auth/password` | Profil · changement de mot de passe |
 | GET | `/dashboard` | Indicateurs (CA, ventes 7 j, top plats, alertes stock…) |
 | CRUD | `/plats`, `/categories`, `/menus`, `/clients`, `/personnel`, `/fournisseurs`, `/users` | Gestion standard (`GET`, `GET /{id}`, `POST`, `PUT /{id}`, `DELETE /{id}`) |

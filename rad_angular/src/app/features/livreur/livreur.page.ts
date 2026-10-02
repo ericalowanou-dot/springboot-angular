@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ConfirmService } from '../../core/confirm.service';
-import { FcfaPipe, LibellePipe, STATUTS, fcfa } from '../../core/format';
+import { FcfaPipe, LibellePipe, STATUTS, fcfa, nomClient } from '../../core/format';
 import { Livraison } from '../../core/models';
 import { ThemeService } from '../../core/theme.service';
 import { ToastService } from '../../core/toast.service';
@@ -29,6 +29,7 @@ export class LivreurPage {
   protected theme = inject(ThemeService);
 
   protected statuts = STATUTS;
+  protected nomClient = nomClient;
   protected motifs = [
     'Client absent',
     'Client injoignable',

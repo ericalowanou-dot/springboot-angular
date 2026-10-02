@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
-import { FcfaPipe, STATUTS } from '../../core/format';
+import { FcfaPipe, STATUTS, nomClient } from '../../core/format';
 import { Livraison, Personnel, StatutLivraison } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../ui/icon.component';
@@ -47,8 +47,12 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
                     <span class="strong">{{ l.commande?.montantTotal | fcfa }}</span>
                   </div>
                   <div class="ligne"><app-icon name="pin" [size]="15" /> {{ l.adresseDestination }}</div>
-                  @if (l.commande?.client; as c) {
-                    <div class="ligne"><app-icon name="user" [size]="15" /> {{ c.prenom }} {{ c.nom }} · {{ c.telephone }}</div>
+                  @if (l.commande; as cmd) {
+                    @if (cmd.client || cmd.nomContact) {
+                      <div class="ligne">
+                        <app-icon name="user" [size]="15" /> {{ nomClient(cmd) }} · {{ cmd.telephoneContact || cmd.client?.telephone }}
+                      </div>
+                    }
                   }
                   <div class="ligne muted small">
                     <app-icon name="clock" [size]="14" />
@@ -176,6 +180,7 @@ export class LivraisonsPage {
   private toasts = inject(ToastService);
 
   protected statuts = STATUTS;
+  protected nomClient = nomClient;
   protected colonnes: Colonne[] = [
     { statut: 'A_ASSIGNER', titre: 'À assigner', icone: 'clock' },
     { statut: 'ASSIGNEE', titre: 'Attente du livreur', icone: 'user' },

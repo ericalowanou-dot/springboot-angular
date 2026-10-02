@@ -58,10 +58,9 @@
                   <div class="small muted">{{ (c.creeLe ?? c.dateCommande) | date: (c.creeLe ? 'd MMM, HH:mm' : 'd MMM') }}</div>
                 </td>
                 <td>
-                  @if (c.client) {
-                    {{ c.client.prenom }} {{ c.client.nom }}
-                  } @else {
-                    <span class="muted">Client de passage</span>
+                  <span [class.muted]="!c.client && !c.nomContact">{{ nomClient(c) }}</span>
+                  @if (c.enLigne) {
+                    <span class="badge primary plain en-ligne">En ligne</span>
                   }
                 </td>
                 <td class="hide-sm">
@@ -118,9 +117,12 @@
         </div>
         <div class="info">
           <span class="label">Client</span>
-          <span class="strong">{{ c.client ? c.client.prenom + ' ' + c.client.nom : 'Client de passage' }}</span>
-          @if (c.client) {
-            <span class="small muted">{{ c.client.telephone }}</span>
+          <span class="strong">{{ nomClient(c) }}</span>
+          @if (c.client?.telephone || c.telephoneContact) {
+            <a class="small lien-tel" [href]="'tel:' + (c.telephoneContact || c.client?.telephone)">{{ c.telephoneContact || c.client?.telephone }}</a>
+          }
+          @if (c.enLigne) {
+            <span class="badge primary plain">En ligne · {{ c.codeSuivi }}</span>
           }
         </div>
         @if (c.livraison) {
