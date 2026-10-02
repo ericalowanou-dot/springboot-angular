@@ -1,57 +1,53 @@
 package com.ucao.dgi.l3.controller;
 
+import com.ucao.dgi.l3.dto.CommandeDtos.ApprovisionnementRequest;
 import com.ucao.dgi.l3.entity.CommandeInterne;
-import com.ucao.dgi.l3.entity.Fournisseur;
-import com.ucao.dgi.l3.service.impl.CommandeInterneServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ucao.dgi.l3.service.CommandeInterneService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/commandes_internes")
-@CrossOrigin("*")
+/** Approvisionnements auprès des fournisseurs (commandes internes). */
 @RestController
+@RequestMapping("/api/approvisionnements")
+@RequiredArgsConstructor
 public class CommandeInterneController {
 
-    @Autowired
-    private CommandeInterneServiceImpl commandeInterneServiceImpl;
+    private final CommandeInterneService commandeInterneService;
 
-    @GetMapping("/find_all")
+    @GetMapping
     public List<CommandeInterne> findAll() {
-        return commandeInterneServiceImpl.findAllCommandeInterne();
+        return commandeInterneService.findAll();
     }
 
-    @GetMapping("/find_by_id/{id}")
+    @GetMapping("/{id}")
     public CommandeInterne findById(@PathVariable Integer id) {
-        return commandeInterneServiceImpl.findCommandeInterneById(id);
+        return commandeInterneService.findById(id);
     }
 
-    @PostMapping("/save")
-    public CommandeInterne save(@RequestBody CommandeInterne commandeInterne) {
-        return commandeInterneServiceImpl.save(commandeInterne);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommandeInterne creer(@Valid @RequestBody ApprovisionnementRequest requete) {
+        return commandeInterneService.creer(requete);
     }
 
-    @PutMapping("/update/{id}")
-    public CommandeInterne update(@PathVariable Integer id, @RequestBody CommandeInterne commandeInterne) {
-        commandeInterne.setIdCmdInt(id);
-        return commandeInterneServiceImpl.update(commandeInterne);
+    /** Marque la commande comme reçue et ajoute les quantités au stock. */
+    @PostMapping("/{id}/reception")
+    public CommandeInterne recevoir(@PathVariable Integer id) {
+        return commandeInterneService.recevoir(id);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public CommandeInterne delete(@PathVariable Integer id) {
-        CommandeInterne commandeInterne = new CommandeInterne();
-        commandeInterne.setIdCmdInt(id);
-        return commandeInterneServiceImpl.delete(commandeInterne);
+    @PostMapping("/{id}/annulation")
+    public CommandeInterne annuler(@PathVariable Integer id) {
+        return commandeInterneService.annuler(id);
     }
 
-    @GetMapping("/find_fournisseur/{idFournisseur}")
-    public Fournisseur findFournisseur(@PathVariable Integer idFournisseur) {
-        return commandeInterneServiceImpl.findFournisseur(idFournisseur);
-    }
-
-    @PostMapping("/valider/{idCommandeInterne}")
-    public Fournisseur validerCommandeInterne(@PathVariable Integer idCommandeInterne) {
-        return commandeInterneServiceImpl.validerCommandeInterne(idCommandeInterne);
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        commandeInterneService.delete(id);
     }
 }
-

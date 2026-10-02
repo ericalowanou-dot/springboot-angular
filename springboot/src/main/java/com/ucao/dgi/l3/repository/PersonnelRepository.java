@@ -4,9 +4,11 @@ import com.ucao.dgi.l3.entity.Personnel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface PersonnelRepository extends JpaRepository<Personnel, Integer> {
 
-    // Trouver un personnel selon sa fonction (Serveur, Livreur, Chef)
-    Personnel findByFonction(String fonction);
+    // Trouver le personnel selon sa fonction (SERVEUR, LIVREUR, CHEF...)
+    List<Personnel> findAllByFonctionIgnoreCase(String fonction);
 }

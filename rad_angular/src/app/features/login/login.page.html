@@ -1,0 +1,98 @@
+<section class="hero">
+  <div class="hero-inner">
+    <div class="brand">
+      <span class="logo"><app-icon name="chef" [size]="22" /></span>
+      <strong>Le Gourmet</strong>
+    </div>
+
+    <div class="pitch">
+      <h1>Votre restaurant,<br /><span>parfaitement orchestré.</span></h1>
+      <p>Commandes, cuisine, livraisons, stocks et équipe : tout votre service réuni en un seul endroit.</p>
+      <ul>
+        <li><app-icon name="receipt" [size]="18" /> Prise de commande rapide en salle et à emporter</li>
+        <li><app-icon name="truck" [size]="18" /> Suivi des livraisons en temps réel</li>
+        <li><app-icon name="package" [size]="18" /> Alertes de stock et approvisionnements</li>
+      </ul>
+    </div>
+
+    <div class="plates" aria-hidden="true">
+      <span>🍛</span><span>🥗</span><span>🔥</span><span>🍨</span><span>🥤</span>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <form class="login-card" (ngSubmit)="connexion()" novalidate>
+    <h2>Bon retour 👋</h2>
+    <p class="muted">Connectez-vous pour accéder à votre espace.</p>
+
+    @if (erreur()) {
+      <div class="form-error" role="alert">{{ erreur() }}</div>
+    }
+
+    <div class="field">
+      <label for="email">Adresse email</label>
+      <div class="input-icon">
+        <app-icon name="mail" [size]="16" />
+        <input
+          id="email"
+          class="input"
+          type="email"
+          name="email"
+          autocomplete="username"
+          placeholder="vous@restaurant.com"
+          [(ngModel)]="email"
+          required
+        />
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="mdp">Mot de passe</label>
+      <div class="input-icon pwd">
+        <app-icon name="key" [size]="16" />
+        <input
+          id="mdp"
+          class="input"
+          [type]="voirMotDePasse() ? 'text' : 'password'"
+          name="motDePasse"
+          autocomplete="current-password"
+          placeholder="••••••••"
+          [(ngModel)]="motDePasse"
+          required
+        />
+        <button
+          type="button"
+          class="icon-btn voir"
+          (click)="voirMotDePasse.set(!voirMotDePasse())"
+          [attr.aria-label]="voirMotDePasse() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+        >
+          <app-icon [name]="voirMotDePasse() ? 'ban' : 'eye'" [size]="16" />
+        </button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-lg btn-block" type="submit" [disabled]="chargement()">
+      @if (chargement()) {
+        <span class="spinner"></span> Connexion…
+      } @else {
+        Se connecter <app-icon name="arrow-right" [size]="16" />
+      }
+    </button>
+
+    @if (demo.length) {
+      <div class="demo">
+        <p class="label">Comptes de démonstration</p>
+        <div class="demo-list">
+          @for (c of demo; track c.email) {
+            <button type="button" class="chip" (click)="remplir(c.email, c.mdp)">{{ c.role }}</button>
+          }
+        </div>
+      </div>
+    }
+
+    <a routerLink="/carte" class="lien-carte">
+      <app-icon name="book" [size]="16" /> Consulter la carte du restaurant
+    </a>
+  </form>
+</section>

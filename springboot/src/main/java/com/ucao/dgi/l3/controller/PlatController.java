@@ -1,60 +1,50 @@
 package com.ucao.dgi.l3.controller;
 
 import com.ucao.dgi.l3.entity.Plat;
-import com.ucao.dgi.l3.service.impl.PlatServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ucao.dgi.l3.service.PlatService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/plats")
-@CrossOrigin("*")
 @RestController
+@RequestMapping("/api/plats")
+@RequiredArgsConstructor
 public class PlatController {
 
-    @Autowired
-    private PlatServiceImpl platServiceImpl;
+    private final PlatService platService;
 
-    @GetMapping("/find_all")
-    public List<Plat> findAll() {
-        return platServiceImpl.findAll();
+    @GetMapping
+    public List<Plat> findAll(@RequestParam(required = false) Integer categorieId) {
+        return platService.findAll(categorieId);
     }
 
-    @GetMapping("/find_by_id/{idPlat}")
-    public Plat findById(@PathVariable Integer idPlat) {
-        return platServiceImpl.findById(idPlat);
+    @GetMapping("/{id}")
+    public Plat findById(@PathVariable Integer id) {
+        return platService.findById(id);
     }
 
-    @PostMapping("/save")
-    public Plat save(@RequestBody Plat plat) {
-        return platServiceImpl.save(plat);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Plat save(@Valid @RequestBody Plat plat) {
+        return platService.save(plat);
     }
 
-    @PutMapping("/update/{idPlat}")
-    public Plat update(@PathVariable Integer idPlat, @RequestBody Plat plat) {
-        plat.setIdPlat(idPlat);
-        return platServiceImpl.update(plat);
+    @PutMapping("/{id}")
+    public Plat update(@PathVariable Integer id, @Valid @RequestBody Plat plat) {
+        return platService.update(id, plat);
     }
 
-    @DeleteMapping("/delete/{idPlat}")
-    public Plat delete(@PathVariable Integer idPlat) {
-        Plat plat = new Plat();
-        plat.setIdPlat(idPlat);
-        return platServiceImpl.delete(plat);
+    @PatchMapping("/{id}/disponibilite")
+    public Plat changerDisponibilite(@PathVariable Integer id, @RequestParam boolean disponible) {
+        return platService.changerDisponibilite(id, disponible);
     }
 
-    @GetMapping("/find_by_categorie/{idCategorie}")
-    public Plat findByCategorie(@PathVariable Integer idCategorie) {
-        return platServiceImpl.findByCaterory(idCategorie);
-    }
-
-    @GetMapping("/find_by_nom/{nomPlat}")
-    public Plat findByNomPlat(@PathVariable String nomPlat) {
-        return platServiceImpl.findByNomPlat(nomPlat);
-    }
-
-    @GetMapping("/find_by_prix_between/{min}/{max}")
-    public Plat findPlatBetween(@PathVariable Double min, @PathVariable Double max) {
-        return platServiceImpl.findPlatBetween(min, max);
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        platService.delete(id);
     }
 }

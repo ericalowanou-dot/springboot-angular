@@ -1,0 +1,212 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Commandes</h1>
+      <p>Suivez chaque commande, de la cuisine jusqu'à l'encaissement.</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary" (click)="charger()"><app-icon name="refresh" [size]="16" /> Actualiser</button>
+      <a routerLink="/commandes/nouvelle" class="btn btn-primary"><app-icon name="plus" [size]="16" /> Nouvelle commande</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="segmented">
+        @for (f of filtres; track f.id) {
+          <button [class.active]="filtre() === f.id" (click)="filtre.set(f.id)">
+            {{ f.libelle }} <span class="count">{{ compteurs()[f.id] }}</span>
+          </button>
+        }
+      </div>
+      <div class="input-icon">
+        <app-icon name="search" [size]="16" />
+        <input
+          class="input"
+          placeholder="N° ou nom du client…"
+          [ngModel]="recherche()"
+          (ngModelChange)="recherche.set($event)"
+        />
+      </div>
+    </div>
+
+    @if (commandes() === null) {
+      <div class="card-body stack">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="skeleton" style="height: 48px"></div>
+        }
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Commande</th>
+              <th>Client</th>
+              <th class="hide-sm">Type</th>
+              <th class="hide-sm">Articles</th>
+              <th>Statut</th>
+              <th>Paiement</th>
+              <th class="right">Montant</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of affichees(); track c.idCommande) {
+              <tr class="clickable" (click)="selection.set(c)">
+                <td>
+                  <div class="strong">#{{ c.idCommande }}</div>
+                  <div class="small muted">{{ (c.creeLe ?? c.dateCommande) | date: (c.creeLe ? 'd MMM, HH:mm' : 'd MMM') }}</div>
+                </td>
+                <td>
+                  @if (c.client) {
+                    {{ c.client.prenom }} {{ c.client.nom }}
+                  } @else {
+                    <span class="muted">Client de passage</span>
+                  }
+                </td>
+                <td class="hide-sm">
+                  <span class="chip">
+                    <app-icon [name]="c.type === 'LIVRAISON' ? 'truck' : c.type === 'A_EMPORTER' ? 'bag' : 'table'" [size]="14" />
+                    {{ c.type | libelle: 'type' }}{{ c.numeroTable ? ' · T' + c.numeroTable : '' }}
+                  </span>
+                </td>
+                <td class="hide-sm muted">{{ c.lignes.length }} plat(s)</td>
+                <td><span class="badge {{ statuts[c.statut ?? '']?.ton }}">{{ c.statut | libelle: 'statut' }}</span></td>
+                <td>
+                  @if (c.payee) {
+                    <span class="badge success plain"><app-icon name="check" [size]="12" /> Payée</span>
+                  } @else if (c.statut !== 'ANNULEE') {
+                    <span class="badge plain">À encaisser</span>
+                  }
+                </td>
+                <td class="right strong nowrap">{{ c.montantTotal | fcfa }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">
+                  <div class="empty">
+                    <span class="empty-icon"><app-icon name="receipt" [size]="26" /></span>
+                    <h3>Aucune commande ici</h3>
+                    <p>Changez de filtre ou créez une nouvelle commande.</p>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (selection(); as c) {
+  <app-modal
+    [titre]="'Commande #' + c.idCommande"
+    [sousTitre]="((c.creeLe ?? c.dateCommande) | date: 'EEEE d MMMM y, HH:mm') ?? ''"
+    taille="lg"
+    (fermer)="selection.set(null)"
+  >
+    <div class="detail ticket">
+      <div class="infos">
+        <div class="info">
+          <span class="label">Statut</span>
+          <span class="badge {{ statuts[c.statut ?? '']?.ton }}">{{ c.statut | libelle: 'statut' }}</span>
+        </div>
+        <div class="info">
+          <span class="label">Type</span>
+          <span class="strong">{{ c.type | libelle: 'type' }}{{ c.numeroTable ? ' · Table ' + c.numeroTable : '' }}</span>
+        </div>
+        <div class="info">
+          <span class="label">Client</span>
+          <span class="strong">{{ c.client ? c.client.prenom + ' ' + c.client.nom : 'Client de passage' }}</span>
+          @if (c.client) {
+            <span class="small muted">{{ c.client.telephone }}</span>
+          }
+        </div>
+        @if (c.livraison) {
+          <div class="info">
+            <span class="label">Livraison</span>
+            <span class="strong">{{ c.livraison.adresseDestination }}</span>
+            <span class="small muted">
+              {{ c.livraison.statut | libelle: 'statut' }}{{ c.livraison.livreur ? ' · ' + c.livraison.livreur.prenom + ' ' + c.livraison.livreur.nom : '' }}
+            </span>
+          </div>
+        }
+      </div>
+
+      @if (c.notes) {
+        <div class="notes"><app-icon name="info" [size]="16" /> {{ c.notes }}</div>
+      }
+
+      <table class="table lignes">
+        <thead>
+          <tr>
+            <th>Plat</th>
+            <th class="right">Prix</th>
+            <th class="right">Qté</th>
+            <th class="right">Sous-total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of c.lignes; track l.idLigne) {
+            <tr>
+              <td class="strong">{{ l.plat.nom }}</td>
+              <td class="right muted nowrap">{{ l.prixUnitaire | fcfa }}</td>
+              <td class="right">× {{ l.quantite }}</td>
+              <td class="right strong nowrap">{{ l.sousTotal | fcfa }}</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="right strong">Total</td>
+            <td class="right total nowrap">{{ c.montantTotal | fcfa }}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="paiement no-print">
+        @if (c.paiement) {
+          <div class="paye">
+            <app-icon name="check" [size]="18" />
+            <div>
+              <strong>Payée · {{ c.paiement.methode | libelle: 'methode' }}</strong>
+              <div class="small">le {{ c.paiement.datePaiement | date: 'd MMMM y' }} — {{ c.paiement.montant | fcfa }}</div>
+            </div>
+          </div>
+        } @else if (c.statut !== 'ANNULEE') {
+          <span class="label">Encaisser</span>
+          <div class="row wrap">
+            <div class="segmented">
+              @for (m of ['ESPECES', 'MOBILE_MONEY', 'CARTE']; track m) {
+                <button [class.active]="methode() === m" (click)="methode.set(m)">{{ m | libelle: 'methode' }}</button>
+              }
+            </div>
+            <button class="btn btn-success" [disabled]="enCours()" (click)="payer(c)">
+              <app-icon name="wallet" [size]="16" /> Encaisser {{ c.montantTotal | fcfa }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div pied class="pied no-print">
+      @if (auth.peutGerer()) {
+        <button class="btn btn-ghost danger-text" (click)="supprimer(c)"><app-icon name="trash" [size]="16" /> Supprimer</button>
+      }
+      <span class="spacer"></span>
+      <button class="btn btn-secondary" (click)="imprimer()"><app-icon name="printer" [size]="16" /> Ticket</button>
+      @if (c.statut === 'EN_ATTENTE' && !c.payee) {
+        <button class="btn btn-secondary" (click)="modifier(c)"><app-icon name="pencil" [size]="16" /> Modifier</button>
+      }
+      @if (c.statut && c.statut !== 'ANNULEE' && !c.payee && c.statut !== 'SERVIE' && c.statut !== 'LIVREE') {
+        <button class="btn btn-secondary" [disabled]="enCours()" (click)="annuler(c)">Annuler</button>
+      }
+      @if (prochaineEtape(c); as etape) {
+        <button class="btn btn-primary" [disabled]="enCours()" (click)="changerStatut(c, etape.statut)">
+          {{ etape.libelle }} <app-icon name="arrow-right" [size]="16" />
+        </button>
+      }
+    </div>
+  </app-modal>
+}

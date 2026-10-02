@@ -2,13 +2,15 @@ package com.ucao.dgi.l3.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "stock")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Stock {
 
@@ -23,4 +25,9 @@ public class Stock {
     @JoinColumn(name = "produit_id")
     @JsonIgnoreProperties({"stock", "fournisseur"})
     private Produit produit;
+
+    public Stock(Produit produit, int quantite) {
+        this.produit = produit;
+        this.quantite = quantite;
+    }
 }

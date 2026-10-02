@@ -1,0 +1,82 @@
+<aside class="sidebar" [class.open]="menuOuvert()">
+  <a routerLink="/dashboard" class="brand">
+    <span class="logo"><app-icon name="chef" [size]="20" /></span>
+    <span>
+      <strong>Le Gourmet</strong>
+      <small>Gestion de restaurant</small>
+    </span>
+  </a>
+
+  <a routerLink="/commandes/nouvelle" class="btn btn-primary btn-block cta">
+    <app-icon name="plus" [size]="16" /> Nouvelle commande
+  </a>
+
+  <nav>
+    @for (section of sections; track section.titre) {
+      @if (section.visible()) {
+        <p class="nav-title">{{ section.titre }}</p>
+        @for (lien of section.liens; track lien.route) {
+          <a [routerLink]="lien.route" routerLinkActive="active" class="nav-link">
+            <app-icon [name]="lien.icone" [size]="18" />
+            <span>{{ lien.libelle }}</span>
+          </a>
+        }
+      }
+    }
+  </nav>
+
+  <a routerLink="/carte" target="_blank" class="nav-link public">
+    <app-icon name="external" [size]="16" />
+    <span>Voir la carte publique</span>
+  </a>
+</aside>
+
+@if (menuOuvert()) {
+  <div class="backdrop" (click)="menuOuvert.set(false)"></div>
+}
+
+<div class="main">
+  <header class="topbar no-print">
+    <button class="icon-btn burger" (click)="menuOuvert.set(true)" aria-label="Ouvrir le menu">
+      <app-icon name="menu" />
+    </button>
+    <h2 class="titre">{{ titrePage() }}</h2>
+
+    <div class="right">
+      <button
+        class="icon-btn"
+        (click)="theme.basculer()"
+        [attr.aria-label]="theme.theme() === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'"
+      >
+        <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+      </button>
+
+      <div class="profil">
+        <button class="profil-btn" (click)="profilOuvert.set(!profilOuvert())">
+          <span class="avatar">{{ initiales() }}</span>
+          <span class="hide-sm qui">
+            <strong>{{ auth.utilisateur()?.prenom }} {{ auth.utilisateur()?.nom }}</strong>
+            <small>{{ auth.utilisateur()?.role | libelle: 'role' }}</small>
+          </span>
+        </button>
+        @if (profilOuvert()) {
+          <div class="menu-overlay" (click)="profilOuvert.set(false)"></div>
+          <div class="dropdown">
+            <div class="dropdown-head">
+              <strong>{{ auth.utilisateur()?.prenom }} {{ auth.utilisateur()?.nom }}</strong>
+              <small>{{ auth.utilisateur()?.email }}</small>
+            </div>
+            <a routerLink="/profil" class="dropdown-item"><app-icon name="user" [size]="16" /> Mon profil</a>
+            <button class="dropdown-item danger" (click)="auth.logout()">
+              <app-icon name="logout" [size]="16" /> Se déconnecter
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <router-outlet />
+  </main>
+</div>

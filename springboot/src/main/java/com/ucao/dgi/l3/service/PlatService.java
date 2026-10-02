@@ -5,13 +5,15 @@ import com.ucao.dgi.l3.entity.Plat;
 import java.util.List;
 
 public interface PlatService {
-    public List<Plat> findAll();
-    public Plat save(Plat plat);
-    public Plat findById(Integer idPlat);
-    public Plat update(Plat plat);
-    public Plat delete(Plat plat);
+    List<Plat> findAll(Integer categorieId);
 
-    public Plat findByCaterory(Integer idCategorie);
-    public Plat findByNomPlat(String nomPlat);
-    public Plat findPlatBetween(Double min,  Double max);
+    Plat findById(Integer id);
+
+    Plat save(Plat plat);
+
+    Plat update(Integer id, Plat plat);
+
+    Plat changerDisponibilite(Integer id, boolean disponible);
+
+    void delete(Integer id);
 }

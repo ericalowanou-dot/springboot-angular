@@ -1,64 +1,46 @@
 package com.ucao.dgi.l3.controller;
 
-import com.ucao.dgi.l3.dto.PersonnelDTO;
 import com.ucao.dgi.l3.entity.Personnel;
-import com.ucao.dgi.l3.service.impl.PersonnelServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ucao.dgi.l3.service.PersonnelService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/personnels")
-@CrossOrigin("*")
 @RestController
+@RequestMapping("/api/personnel")
+@RequiredArgsConstructor
 public class PersonnelController {
 
-    @Autowired
-    private PersonnelServiceImpl personnelServiceImpl;
+    private final PersonnelService personnelService;
 
-    @GetMapping("/find_all")
-    public List<Personnel> findAll() {
-        return personnelServiceImpl.findAllPersonnel();
+    /** ?fonction=LIVREUR permet de filtrer (ex. pour assigner une livraison). */
+    @GetMapping
+    public List<Personnel> findAll(@RequestParam(required = false) String fonction) {
+        return personnelService.findAll(fonction);
     }
 
-    @GetMapping("/find_by_id/{idPersonnel}")
-    public Personnel findById(@PathVariable Integer idPersonnel) {
-        return personnelServiceImpl.findPersonnelById(idPersonnel);
+    @GetMapping("/{id}")
+    public Personnel findById(@PathVariable Integer id) {
+        return personnelService.findById(id);
     }
 
-    @PostMapping("/save")
-    public Personnel save(@RequestBody PersonnelDTO personnelDTO) {
-        return personnelServiceImpl.savePersonnel(personnelDTO);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Personnel save(@Valid @RequestBody Personnel personnel) {
+        return personnelService.save(personnel);
     }
 
-    @PostMapping("/update")
-    public Personnel update(@RequestBody PersonnelDTO personnelDTO) {
-        return personnelServiceImpl.updatePersonnel(personnelDTO);
+    @PutMapping("/{id}")
+    public Personnel update(@PathVariable Integer id, @Valid @RequestBody Personnel personnel) {
+        return personnelService.update(id, personnel);
     }
 
-    @PutMapping("/update/{idPersonnel}")
-    public Personnel updateById(@PathVariable Integer idPersonnel, @RequestBody PersonnelDTO personnelDTO) {
-        personnelDTO.setIdPersonnel(idPersonnel);
-        return personnelServiceImpl.updatePersonnel(personnelDTO);
-    }
-
-    @PostMapping("/delete/{idPersonnel}")
-    public Personnel delete(@PathVariable Integer idPersonnel) {
-        return personnelServiceImpl.deletePersonnel(idPersonnel);
-    }
-
-    @GetMapping("/find_serveur")
-    public Personnel findPersonnelServeur() {
-        return personnelServiceImpl.findPersonnelServeur();
-    }
-
-    @GetMapping("/find_livreur")
-    public Personnel findPersonnelLivreur() {
-        return personnelServiceImpl.findPersonnelLivreur();
-    }
-
-    @GetMapping("/find_chef")
-    public Personnel findPersonnelChef() {
-        return personnelServiceImpl.findPersonnelChef();
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        personnelService.delete(id);
     }
 }

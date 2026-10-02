@@ -1,61 +1,58 @@
 package com.ucao.dgi.l3.controller;
 
+import com.ucao.dgi.l3.dto.CommandeDtos.AjustementStockRequest;
+import com.ucao.dgi.l3.dto.CommandeDtos.ProduitRequest;
 import com.ucao.dgi.l3.entity.Produit;
-import com.ucao.dgi.l3.service.impl.ProduitServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ucao.dgi.l3.service.ProduitService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/produits")
-@CrossOrigin("*")
+/** Produits (matières premières) et leur stock. */
 @RestController
+@RequestMapping("/api/produits")
+@RequiredArgsConstructor
 public class ProduitController {
 
-    @Autowired
-    private ProduitServiceImpl produitServiceImpl;
+    private final ProduitService produitService;
 
-    @GetMapping("/find_all")
+    @GetMapping
     public List<Produit> findAll() {
-        return produitServiceImpl.findAll();
+        return produitService.findAll();
     }
 
-    @GetMapping("/find_by_id/{id}")
+    @GetMapping("/alertes")
+    public List<Produit> alertes() {
+        return produitService.findEnAlerte();
+    }
+
+    @GetMapping("/{id}")
     public Produit findById(@PathVariable Integer id) {
-        return produitServiceImpl.findById(id);
+        return produitService.findById(id);
     }
 
-    @PostMapping("/save")
-    public Produit save(@RequestBody Produit produit) {
-        return produitServiceImpl.save(produit);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Produit save(@Valid @RequestBody ProduitRequest requete) {
+        return produitService.save(requete);
     }
 
-    @PutMapping("/update/{id}")
-    public Produit update(@PathVariable Integer id, @RequestBody Produit produit) {
-        produit.setIdProduit(id);
-        return produitServiceImpl.update(produit);
+    @PutMapping("/{id}")
+    public Produit update(@PathVariable Integer id, @Valid @RequestBody ProduitRequest requete) {
+        return produitService.update(id, requete);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public Produit delete(@PathVariable Integer id) {
-        Produit produit = new Produit();
-        produit.setIdProduit(id);
-        return produitServiceImpl.delete(produit);
+    @PatchMapping("/{id}/stock")
+    public Produit ajusterStock(@PathVariable Integer id, @Valid @RequestBody AjustementStockRequest requete) {
+        return produitService.ajusterStock(id, requete.quantite());
     }
 
-    @GetMapping("/find_by_fournisseur/{idFournisseur}")
-    public List<Produit> findByFournisseurId(@PathVariable Integer idFournisseur) {
-        return produitServiceImpl.findByFournisseurId(idFournisseur);
-    }
-
-    @GetMapping("/find_by_nom/{nomProduit}")
-    public List<Produit> findByProduitName(@PathVariable String nomProduit) {
-        return produitServiceImpl.findByProduitName(nomProduit);
-    }
-
-    @GetMapping("/find_produits_sous_seuil")
-    public List<Produit> findProduitsSousSeuil() {
-        return produitServiceImpl.findProduitsSousSeuil();
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        produitService.delete(id);
     }
 }
-

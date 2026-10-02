@@ -3,15 +3,17 @@ package com.ucao.dgi.l3.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 
 @Entity
 @Table(name = "ligne_commande")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class LigneCommande implements Serializable {
 
@@ -21,12 +23,13 @@ public class LigneCommande implements Serializable {
 
     private Integer quantite;
 
+    /** Prix figé au moment de la commande (le prix du plat peut changer ensuite). */
     private double prixUnitaire;
 
     // 🔹 Chaque ligne appartient à une commande
     @ManyToOne
     @JoinColumn(name = "commande_id")
-    @JsonIgnoreProperties({"lignes", "paiement", "livraison", "client"})
+    @JsonIgnore
     private Commande commande;
 
     // 🔹 Chaque ligne concerne un seul plat
@@ -34,11 +37,18 @@ public class LigneCommande implements Serializable {
     @JoinColumn(name = "plat_id")
     @JsonIgnoreProperties({"lignes", "categorie"})
     private Plat plat;
-    
+
     @ManyToOne
     @JoinColumn(name = "panier_id")
     @JsonIgnore
     private Panier panier;
 
     private Double sousTotal;
+
+    public LigneCommande(Plat plat, int quantite) {
+        this.plat = plat;
+        this.quantite = quantite;
+        this.prixUnitaire = plat.getPrix();
+        this.sousTotal = plat.getPrix() * quantite;
+    }
 }

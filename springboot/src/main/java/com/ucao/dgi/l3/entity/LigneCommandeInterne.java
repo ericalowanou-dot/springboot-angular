@@ -1,16 +1,19 @@
 package com.ucao.dgi.l3.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 
 @Entity
 @Table(name = "ligne_commande_interne")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class LigneCommandeInterne implements Serializable {
 
@@ -20,10 +23,12 @@ public class LigneCommandeInterne implements Serializable {
 
     private Integer quantite;
 
+    private Double prixUnitaire;
+
     // 🔹 Chaque ligne appartient à une commande interne
     @ManyToOne
     @JoinColumn(name = "commande_interne_id")
-    @JsonIgnoreProperties({"lignes", "fournisseur"})
+    @JsonIgnore
     private CommandeInterne commandeInterne;
 
     // 🔹 Et concerne un produit

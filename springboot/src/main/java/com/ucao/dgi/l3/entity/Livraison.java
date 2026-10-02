@@ -2,16 +2,18 @@ package com.ucao.dgi.l3.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "livraison")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Livraison implements Serializable {
 
@@ -19,12 +21,22 @@ public class Livraison implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idLivraison;
 
+    /** Date effective de livraison (renseignée quand la livraison est terminée). */
     private LocalDate dateLivraison;
+
     private String adresseDestination;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private StatutLivraison statut;
+
+    @ManyToOne
+    @JoinColumn(name = "livreur_id")
+    private Personnel livreur;
 
     // 🔹 Liée à une commande
     @OneToOne
     @JoinColumn(name = "commande_id")
-    @JsonIgnoreProperties({"paiement", "livraison", "lignes", "client"})
+    @JsonIgnoreProperties({"livraison"})
     private Commande commande;
 }

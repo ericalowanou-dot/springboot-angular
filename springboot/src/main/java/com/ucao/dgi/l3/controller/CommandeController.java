@@ -1,65 +1,59 @@
 package com.ucao.dgi.l3.controller;
 
+import com.ucao.dgi.l3.dto.CommandeDtos.CommandeRequest;
+import com.ucao.dgi.l3.dto.CommandeDtos.PaiementRequest;
+import com.ucao.dgi.l3.dto.CommandeDtos.StatutRequest;
 import com.ucao.dgi.l3.entity.Commande;
-import com.ucao.dgi.l3.service.impl.CommandeServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ucao.dgi.l3.entity.StatutCommande;
+import com.ucao.dgi.l3.service.CommandeService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/commandes")
-@CrossOrigin("*")
 @RestController
+@RequestMapping("/api/commandes")
+@RequiredArgsConstructor
 public class CommandeController {
 
-    @Autowired
-    private CommandeServiceImpl commandeServiceImpl;
+    private final CommandeService commandeService;
 
-    @GetMapping("/find_all")
-    public List<Commande> findAll() {
-        return commandeServiceImpl.findAll();
+    @GetMapping
+    public List<Commande> findAll(@RequestParam(required = false) StatutCommande statut) {
+        return commandeService.findAll(statut);
     }
 
-    @GetMapping("/find_by_id/{id}")
+    @GetMapping("/{id}")
     public Commande findById(@PathVariable Integer id) {
-        return commandeServiceImpl.findById(id);
+        return commandeService.findById(id);
     }
 
-    @PostMapping("/save")
-    public Commande save(@RequestBody Commande commande) {
-        return commandeServiceImpl.save(commande);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Commande creer(@Valid @RequestBody CommandeRequest requete) {
+        return commandeService.creer(requete);
     }
 
-    @PutMapping("/update/{id}")
-    public Commande update(@PathVariable Integer id, @RequestBody Commande commande) {
-        commande.setIdCommande(id);
-        return commandeServiceImpl.update(commande);
+    @PutMapping("/{id}")
+    public Commande modifier(@PathVariable Integer id, @Valid @RequestBody CommandeRequest requete) {
+        return commandeService.modifier(id, requete);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public Commande delete(@PathVariable Integer id) {
-        Commande commande = new Commande();
-        commande.setIdCommande(id);
-        return commandeServiceImpl.delete(commande);
+    @PatchMapping("/{id}/statut")
+    public Commande changerStatut(@PathVariable Integer id, @Valid @RequestBody StatutRequest requete) {
+        return commandeService.changerStatut(id, requete.statut());
     }
 
-    @GetMapping("/find_all_by_client/{idClient}")
-    public List<Commande> findAllByClient(@PathVariable Integer idClient) {
-        return commandeServiceImpl.findAllByClient(idClient);
+    @PostMapping("/{id}/paiement")
+    public Commande payer(@PathVariable Integer id, @Valid @RequestBody PaiementRequest requete) {
+        return commandeService.payer(id, requete.methode());
     }
 
-    @GetMapping("/find_by_etat/{etat}")
-    public List<Commande> findByEtat(@PathVariable String etat) {
-        return commandeServiceImpl.findByEtat(etat);
-    }
-
-    @PostMapping("/calculer_montant_total")
-    public Double calculerMontantTotal(@RequestBody Commande commande) {
-        return commandeServiceImpl.calculerMontantTotal(commande);
-    }
-
-    @PostMapping("/valider")
-    public Commande validerCommande(@RequestBody Commande commande) {
-        return commandeServiceImpl.validerCommande(commande);
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        commandeService.delete(id);
     }
 }

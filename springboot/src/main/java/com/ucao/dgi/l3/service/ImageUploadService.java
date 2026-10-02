@@ -1,61 +1,70 @@
 package com.ucao.dgi.l3.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.ucao.dgi.l3.entity.ImageStockee;
+import com.ucao.dgi.l3.exception.RegleMetierException;
+import com.ucao.dgi.l3.exception.RessourceIntrouvableException;
+import com.ucao.dgi.l3.repository.ImageStockeeRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
+/** Stocke les images en base de données et les sert via /api/images/{id}. */
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class ImageUploadService {
 
-    @Value("${app.upload.dir:uploads}")
-    private String uploadDir;
+    public static final String PREFIXE_URL = "/api/images/";
+    private static final long TAILLE_MAX = 5L * 1024 * 1024;
+    private static final Set<String> TYPES_AUTORISES = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
-    @Value("${app.base.url:http://localhost:8081}")
-    private String baseUrl;
+    private final ImageStockeeRepository imageRepository;
 
-    public String uploadImage(MultipartFile file, String subfolder) throws IOException {
-        // Créer le dossier s'il n'existe pas
-        Path uploadPath = Paths.get(uploadDir, subfolder);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
+    /** Enregistre l'image et retourne son URL relative (ex. /api/images/uuid). */
+    public String uploadImage(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new RegleMetierException("Le fichier est vide");
         }
-
-        // Générer un nom de fichier unique
-        String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".") 
-            ? originalFilename.substring(originalFilename.lastIndexOf(".")) 
-            : "";
-        String filename = UUID.randomUUID().toString() + extension;
-
-        // Sauvegarder le fichier
-        Path filePath = uploadPath.resolve(filename);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        // Retourner l'URL complète de l'image
-        return baseUrl + "/images/" + subfolder + "/" + filename;
+        if (file.getSize() > TAILLE_MAX) {
+            throw new RegleMetierException("Image trop volumineuse (5 Mo maximum)");
+        }
+        String type = file.getContentType();
+        if (type == null || !TYPES_AUTORISES.contains(type)) {
+            throw new RegleMetierException("Format non supporté (JPEG, PNG, WebP ou GIF uniquement)");
+        }
+        ImageStockee image = new ImageStockee();
+        image.setId(UUID.randomUUID().toString());
+        image.setContentType(type);
+        image.setData(file.getBytes());
+        image.setCreeLe(LocalDateTime.now());
+        imageRepository.save(image);
+        return PREFIXE_URL + image.getId();
     }
 
-    public void deleteImage(String imageUrl) throws IOException {
-        if (imageUrl == null || imageUrl.isEmpty()) {
+    @Transactional(readOnly = true)
+    public ImageStockee trouver(String id) {
+        return imageRepository.findById(id).orElseThrow(() -> new RessourceIntrouvableException("Image", id));
+    }
+
+    /** Supprime l'image si l'URL pointe vers une image stockée par l'application ; ignore les URL externes. */
+    public void supprimerSiInterne(String imageUrl) {
+        if (imageUrl == null) {
             return;
         }
-
-        // Extraire le chemin du fichier depuis l'URL
-        String path = imageUrl.replace(baseUrl + "/images/", "");
-        Path filePath = Paths.get(uploadDir, path);
-
-        if (Files.exists(filePath)) {
-            Files.delete(filePath);
+        int index = imageUrl.indexOf(PREFIXE_URL);
+        if (index < 0) {
+            return;
+        }
+        String id = imageUrl.substring(index + PREFIXE_URL.length());
+        // l'identifiant est un UUID : on ignore toute valeur qui n'en a pas la forme
+        if (id.matches("[0-9a-fA-F-]{36}")) {
+            imageRepository.deleteById(id);
         }
     }
 }
-
-
-

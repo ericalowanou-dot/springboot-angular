@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Base H2 locale (profil h2) ###
+data/
+uploads/

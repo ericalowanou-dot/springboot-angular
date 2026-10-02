@@ -1,55 +1,45 @@
 package com.ucao.dgi.l3.controller;
 
 import com.ucao.dgi.l3.entity.Menu;
-import com.ucao.dgi.l3.service.impl.MenuServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ucao.dgi.l3.service.MenuService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/menus")
-@CrossOrigin("*")
 @RestController
+@RequestMapping("/api/menus")
+@RequiredArgsConstructor
 public class MenuController {
 
-    @Autowired
-    private MenuServiceImpl menuServiceImpl;
+    private final MenuService menuService;
 
-    @GetMapping("/find_all")
+    @GetMapping
     public List<Menu> findAll() {
-        return menuServiceImpl.findAll();
+        return menuService.findAll();
     }
 
-    @GetMapping("/find_by_id/{id}")
-    public Menu findById(@PathVariable Integer id) {
-        return menuServiceImpl.findById(id);
+    @GetMapping("/{id}")
+    public Menu findById(@PathVariable Long id) {
+        return menuService.findById(id);
     }
 
-    @PostMapping("/save")
-    public Menu save(@RequestBody Menu menu) {
-        return menuServiceImpl.save(menu);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Menu save(@Valid @RequestBody Menu menu) {
+        return menuService.save(menu);
     }
 
-    @PutMapping("/update/{id}")
-    public Menu update(@PathVariable Integer id, @RequestBody Menu menu) {
-        menu.setIdMenu(id.longValue());
-        return menuServiceImpl.update(menu);
+    @PutMapping("/{id}")
+    public Menu update(@PathVariable Long id, @Valid @RequestBody Menu menu) {
+        return menuService.update(id, menu);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public Menu delete(@PathVariable Integer id) {
-        Menu menu = new Menu();
-        menu.setIdMenu(id.longValue());
-        return menuServiceImpl.delete(menu);
-    }
-
-    @GetMapping("/find_by_nom/{nomMenu}")
-    public Menu findByNomMenu(@PathVariable String nomMenu) {
-        return menuServiceImpl.findByNomMenu(nomMenu);
-    }
-
-    @GetMapping("/find_by_categorie/{idCategorie}")
-    public List<Menu> findByCategorie(@PathVariable Integer idCategorie) {
-        return menuServiceImpl.findByCategorie(idCategorie);
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        menuService.delete(id);
     }
 }

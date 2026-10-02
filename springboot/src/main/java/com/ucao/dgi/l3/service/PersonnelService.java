@@ -1,23 +1,17 @@
 package com.ucao.dgi.l3.service;
 
-import com.ucao.dgi.l3.dto.PersonnelDTO;
 import com.ucao.dgi.l3.entity.Personnel;
 
 import java.util.List;
 
 public interface PersonnelService {
-    public List<Personnel> findAllPersonnel();
+    List<Personnel> findAll(String fonction);
 
-    public Personnel findPersonnelById(Integer idPersonnel);
+    Personnel findById(Integer id);
 
-    public Personnel savePersonnel(PersonnelDTO personnelDTO);
+    Personnel save(Personnel personnel);
 
-    public Personnel updatePersonnel(PersonnelDTO personnelDTO);
+    Personnel update(Integer id, Personnel personnel);
 
-    public Personnel deletePersonnel(Integer idPersonnel);
-
-    public Personnel findPersonnelServeur();
-    public Personnel findPersonnelLivreur();
-    public Personnel findPersonnelChef();
-
+    void delete(Integer id);
 }

@@ -1,60 +1,107 @@
 import { Routes } from '@angular/router';
-
-// LOGIN
-import { LoginComponent } from './pages/login/login.component';
-
-// CATEGORIES
-import { CreateCategorieComponent } from './pages/categories/create-categorie/create-categorie.component';
-import { ListCategorieComponent } from './pages/categories/list-categorie/list-categorie.component';
-import { UpdateCategorieComponent } from './pages/categories/update-categorie/update-categorie.component';
-
-// CLIENTS
-import { CreateClientComponent } from './pages/clients/create-client/create-client.component';
-import { ListClientComponent } from './pages/clients/list-client/list-client.component';
-import { UpdateClientComponent } from './pages/clients/update-client/update-client.component';
-
-// COMMANDES
-import { CreateCommandeComponent } from './pages/commandes/create-commande/create-commande.component';
-import { ListCommandeComponent } from './pages/commandes/list-commande/list-commande.component';
-import { UpdateCommandeComponent } from './pages/commandes/update-commande/update-commande.component';
-
-// MENUS
-import { CreateMenuComponent } from './pages/menus/create-menu/create-menu.component';
-import { ListMenuComponent } from './pages/menus/list-menu/list-menu.component';
-import { UpdateMenuComponent } from './pages/menus/update-menu/update-menu.component';
-
-// PLATS
-import { CreatePlatComponent } from './pages/plats/create-plat/create-plat.component';
-import { ListPlatComponent } from './pages/plats/list-plat/list-plat.component';
-import { UpdatePlatComponent } from './pages/plats/update-plat/update-plat.component';
+import { authGuard, inviteGuard, roleGuard } from './core/guards';
+import { ShellComponent } from './layout/shell.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-
-  { path: 'login', component: LoginComponent },
-
-  // CATEGORIES
-  { path: 'categories', component: ListCategorieComponent },
-  { path: 'categories/create', component: CreateCategorieComponent },
-  { path: 'categories/update/:id', component: UpdateCategorieComponent },
-
-  // CLIENTS
-  { path: 'clients', component: ListClientComponent },
-  { path: 'clients/create', component: CreateClientComponent },
-  { path: 'clients/update/:id', component: UpdateClientComponent },
-
-  // COMMANDES
-  { path: 'commandes', component: ListCommandeComponent },
-  { path: 'commandes/create', component: CreateCommandeComponent },
-  { path: 'commandes/update/:id', component: UpdateCommandeComponent },
-
-  // MENUS
-  { path: 'menus', component: ListMenuComponent },
-  { path: 'menus/create', component: CreateMenuComponent },
-  { path: 'menus/update/:id', component: UpdateMenuComponent },
-
-  // PLATS
-  { path: 'plats', component: ListPlatComponent },
-  { path: 'plats/create', component: CreatePlatComponent },
-  { path: 'plats/update/:id', component: UpdatePlatComponent },
+  {
+    path: 'login',
+    canActivate: [inviteGuard],
+    title: 'Connexion · Le Gourmet',
+    loadComponent: () => import('./features/login/login.page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'carte',
+    title: 'Notre carte · Le Gourmet',
+    loadComponent: () => import('./features/carte/carte.page').then((m) => m.CartePage),
+  },
+  {
+    path: '',
+    component: ShellComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'dashboard',
+        title: 'Tableau de bord · Le Gourmet',
+        loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
+      },
+      {
+        path: 'commandes',
+        title: 'Commandes · Le Gourmet',
+        loadComponent: () => import('./features/commandes/commandes.page').then((m) => m.CommandesPage),
+      },
+      {
+        path: 'commandes/nouvelle',
+        title: 'Nouvelle commande · Le Gourmet',
+        loadComponent: () => import('./features/commandes/caisse.page').then((m) => m.CaissePage),
+      },
+      {
+        path: 'commandes/:id/modifier',
+        title: 'Modifier la commande · Le Gourmet',
+        loadComponent: () => import('./features/commandes/caisse.page').then((m) => m.CaissePage),
+      },
+      {
+        path: 'livraisons',
+        title: 'Livraisons · Le Gourmet',
+        loadComponent: () => import('./features/livraisons/livraisons.page').then((m) => m.LivraisonsPage),
+      },
+      {
+        path: 'clients',
+        title: 'Clients · Le Gourmet',
+        loadComponent: () => import('./features/clients/clients.page').then((m) => m.ClientsPage),
+      },
+      {
+        path: 'plats',
+        title: 'Plats · Le Gourmet',
+        loadComponent: () => import('./features/catalogue/plats.page').then((m) => m.PlatsPage),
+      },
+      {
+        path: 'categories',
+        title: 'Catégories · Le Gourmet',
+        loadComponent: () => import('./features/catalogue/categories.page').then((m) => m.CategoriesPage),
+      },
+      {
+        path: 'menus',
+        title: 'Menus · Le Gourmet',
+        loadComponent: () => import('./features/catalogue/menus.page').then((m) => m.MenusPage),
+      },
+      {
+        path: 'stocks',
+        title: 'Stocks · Le Gourmet',
+        canActivate: [roleGuard('ADMIN', 'GERANT')],
+        loadComponent: () => import('./features/stocks/produits.page').then((m) => m.ProduitsPage),
+      },
+      {
+        path: 'fournisseurs',
+        title: 'Fournisseurs · Le Gourmet',
+        canActivate: [roleGuard('ADMIN', 'GERANT')],
+        loadComponent: () => import('./features/stocks/fournisseurs.page').then((m) => m.FournisseursPage),
+      },
+      {
+        path: 'approvisionnements',
+        title: 'Approvisionnements · Le Gourmet',
+        canActivate: [roleGuard('ADMIN', 'GERANT')],
+        loadComponent: () =>
+          import('./features/stocks/approvisionnements.page').then((m) => m.ApprovisionnementsPage),
+      },
+      {
+        path: 'personnel',
+        title: 'Personnel · Le Gourmet',
+        canActivate: [roleGuard('ADMIN', 'GERANT')],
+        loadComponent: () => import('./features/personnel/personnel.page').then((m) => m.PersonnelPage),
+      },
+      {
+        path: 'utilisateurs',
+        title: 'Utilisateurs · Le Gourmet',
+        canActivate: [roleGuard('ADMIN')],
+        loadComponent: () => import('./features/admin/utilisateurs.page').then((m) => m.UtilisateursPage),
+      },
+      {
+        path: 'profil',
+        title: 'Mon profil · Le Gourmet',
+        loadComponent: () => import('./features/profil/profil.page').then((m) => m.ProfilPage),
+      },
+    ],
+  },
+  { path: '**', redirectTo: '' },
 ];

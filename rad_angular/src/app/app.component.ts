@@ -1,17 +1,15 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { ThemeService } from './core/theme.service';
+import { OverlaysComponent } from './ui/overlays.component';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
-  templateUrl: './app.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterOutlet, OverlaysComponent],
+  template: `<router-outlet /><app-overlays />`,
 })
 export class AppComponent {
-  constructor(private router: Router) {}
-
-  isLoginPage(): boolean {
-    return this.router.url === '/' || this.router.url === '/login';
-  }
+  // instancié ici pour appliquer le thème dès le démarrage
+  private theme = inject(ThemeService);
 }

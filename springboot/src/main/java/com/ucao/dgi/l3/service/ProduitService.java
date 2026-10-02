@@ -1,27 +1,22 @@
 package com.ucao.dgi.l3.service;
 
+import com.ucao.dgi.l3.dto.CommandeDtos.ProduitRequest;
 import com.ucao.dgi.l3.entity.Produit;
 
 import java.util.List;
 
 public interface ProduitService {
-
     List<Produit> findAll();
+
+    List<Produit> findEnAlerte();
 
     Produit findById(Integer id);
 
-    Produit save(Produit product);
+    Produit save(ProduitRequest requete);
 
-    Produit update(Produit product);
+    Produit update(Integer id, ProduitRequest requete);
 
-    Produit delete(Produit product);
+    Produit ajusterStock(Integer id, int quantite);
 
-    // Un fournisseur peut avoir plusieurs produits
-    List<Produit> findByFournisseurId(Integer idFournisseur);
-
-    // Plusieurs produits peuvent avoir le même nom
-    List<Produit> findByProduitName(String nomProduit);
-
-    // Tous les produits sous le seuil critique
-    List<Produit> findProduitsSousSeuil();
+    void delete(Integer id);
 }

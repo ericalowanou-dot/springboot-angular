@@ -20,7 +20,8 @@ import java.util.List;
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "email")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -56,6 +57,8 @@ public class User implements Serializable, UserDetails {
     @JsonIgnore
     private Client client;
 
+    private java.time.LocalDateTime derniereConnexion;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean enabled = true;
@@ -74,6 +77,7 @@ public class User implements Serializable, UserDetails {
 
     // Enum pour les rôles
     public enum Role {
+        EMPLOYE,
         CLIENT,
         ADMIN,
         GERANT

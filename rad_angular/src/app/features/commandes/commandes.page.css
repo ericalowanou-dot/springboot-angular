@@ -1,0 +1,88 @@
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.infos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.notes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.lignes {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.lignes tfoot td {
+  padding: 14px 16px;
+  background: var(--surface-2);
+}
+
+.total {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary-text);
+}
+
+.paiement {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.paye {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.pied {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  align-items: center;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.danger-text {
+  color: var(--danger);
+}

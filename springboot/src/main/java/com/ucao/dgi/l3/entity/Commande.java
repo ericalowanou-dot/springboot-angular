@@ -1,45 +1,82 @@
 package com.ucao.dgi.l3.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+
 @Entity
 @Table(name = "rad_commande")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class Commande implements Serializable { //Elle permet de sauvegarder, transférer ou mettre en cache des objets Java.
+public class Commande implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @SequenceGenerator(name = "seq_commande", sequenceName = "commande_id_seq", initialValue = 1, allocationSize = 1)
     private Integer idCommande;
 
     private LocalDate dateCommande;
 
-    private String etat; // Ex: "en préparation", "livrée"
+    private LocalDateTime creeLe;
 
-    // Plusieurs commandes appartiennent à un seul client
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private StatutCommande statut;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TypeCommande type;
+
+    private Integer numeroTable;
+
+    @Column(length = 255)
+    private String notes;
+
+    /** Calculé côté serveur à partir des lignes, jamais fourni par le client HTTP. */
+    private Double montantTotal;
+
+    // Plusieurs commandes appartiennent à un seul client (optionnel pour une commande au comptoir)
     @ManyToOne
     @JoinColumn(name = "id_client")
     @JsonIgnoreProperties({"commandes", "panier"})
     private Client client;
 
     // Une commande contient plusieurs lignes
-    @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<LigneCommande> lignes;
+    @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"commande", "panier"})
+    private List<LigneCommande> lignes = new ArrayList<>();
 
-    // Chaque commande a un paiement
+    // Chaque commande a au plus un paiement
     @OneToOne(mappedBy = "commande", cascade = CascadeType.ALL)
-    @JsonIgnore
+    @JsonIgnoreProperties({"commande"})
     private Paiement paiement;
 
-    // Une commande peut avoir une livraison
+    // Une commande en livraison a une livraison
     @OneToOne(mappedBy = "commande", cascade = CascadeType.ALL)
-    @JsonIgnore
+    @JsonIgnoreProperties({"commande"})
     private Livraison livraison;
+
+    public boolean isPayee() {
+        return paiement != null;
+    }
+
+    public void ajouterLigne(LigneCommande ligne) {
+        ligne.setCommande(this);
+        lignes.add(ligne);
+    }
+
+    public void recalculerTotal() {
+        this.montantTotal = lignes.stream()
+                .mapToDouble(l -> l.getSousTotal() == null ? 0 : l.getSousTotal())
+                .sum();
+    }
 }

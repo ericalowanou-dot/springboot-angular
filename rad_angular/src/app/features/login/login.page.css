@@ -1,0 +1,205 @@
+:host {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  min-height: 100dvh;
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 15% 15%, rgb(251 146 60 / 0.55), transparent 45%),
+    radial-gradient(circle at 85% 85%, rgb(220 38 38 / 0.45), transparent 50%),
+    linear-gradient(160deg, #1c1917 0%, #292524 55%, #431407 100%);
+}
+
+.hero-inner {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 44px 56px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+  box-shadow: 0 10px 24px -8px rgb(234 88 12 / 0.9);
+}
+
+.pitch h1 {
+  font-size: clamp(32px, 3.6vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.pitch h1 span {
+  background: linear-gradient(90deg, #fdba74, #fb923c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.pitch p {
+  max-width: 460px;
+  margin: 18px 0 26px;
+  font-size: 16px;
+  color: #d6d3d1;
+}
+
+.pitch ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.pitch li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #e7e5e4;
+}
+
+.pitch li app-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.08);
+  color: #fdba74;
+}
+
+.plates {
+  display: flex;
+  gap: 14px;
+}
+
+.plates span {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  font-size: 28px;
+  background: rgb(255 255 255 / 0.07);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  animation: flotte 4s ease-in-out infinite;
+}
+
+.plates span:nth-child(2) {
+  animation-delay: 0.4s;
+}
+.plates span:nth-child(3) {
+  animation-delay: 0.8s;
+}
+.plates span:nth-child(4) {
+  animation-delay: 1.2s;
+}
+.plates span:nth-child(5) {
+  animation-delay: 1.6s;
+}
+
+.panel {
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+}
+
+.login-card {
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: apparition 0.35s ease-out;
+}
+
+.login-card h2 {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.login-card > p {
+  margin: -10px 0 4px;
+}
+
+.pwd .input {
+  padding-right: 44px;
+}
+
+.voir {
+  position: absolute;
+  right: 4px;
+  top: 3px;
+}
+
+.demo {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+}
+
+.demo .label {
+  margin: 0 0 10px;
+}
+
+.demo-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.demo .chip {
+  cursor: pointer;
+}
+
+.demo .chip:hover {
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+
+.lien-carte {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.lien-carte:hover {
+  text-decoration: underline;
+}
+
+@keyframes flotte {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (max-width: 900px) {
+  :host {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    display: none;
+  }
+}

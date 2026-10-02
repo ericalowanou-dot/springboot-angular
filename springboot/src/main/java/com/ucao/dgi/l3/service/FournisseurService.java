@@ -5,13 +5,13 @@ import com.ucao.dgi.l3.entity.Fournisseur;
 import java.util.List;
 
 public interface FournisseurService {
-    public List<Fournisseur> findAllFournisseur();
-    public Fournisseur findFournisseurById(Integer id);
-    public Fournisseur findFournisseurByNom(String nom);
-    public Fournisseur save(Fournisseur fournisseur);
-    public Fournisseur update(Fournisseur fournisseur);
-    public Fournisseur delete(Fournisseur idFournisseur);
+    List<Fournisseur> findAll();
 
-    public Fournisseur findProduitByFournisseur(Integer idFournisseur);
-    public Fournisseur findCommandeInterne(Integer idFournisseur);
+    Fournisseur findById(Integer id);
+
+    Fournisseur save(Fournisseur fournisseur);
+
+    Fournisseur update(Integer id, Fournisseur fournisseur);
+
+    void delete(Integer id);
 }

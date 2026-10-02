@@ -1,0 +1,168 @@
+<div class="caisse">
+  <section class="catalogue">
+    <div class="head">
+      <div class="row">
+        <a routerLink="/commandes" class="icon-btn" aria-label="Retour aux commandes"><app-icon name="arrow-left" /></a>
+        <h1>{{ id() ? 'Modifier la commande #' + id() : 'Nouvelle commande' }}</h1>
+      </div>
+      <div class="input-icon recherche">
+        <app-icon name="search" [size]="16" />
+        <input
+          class="input"
+          placeholder="Rechercher un plat…"
+          [ngModel]="recherche()"
+          (ngModelChange)="recherche.set($event)"
+        />
+      </div>
+    </div>
+
+    <div class="cats">
+      <button class="cat" [class.active]="categorie() === null" (click)="categorie.set(null)">
+        <span>🍽️</span> Tout
+      </button>
+      @for (c of categories(); track c.idCategorie) {
+        <button class="cat" [class.active]="categorie() === c.idCategorie" (click)="categorie.set(c.idCategorie ?? null)">
+          <span>{{ emoji(c.nom) }}</span> {{ c.nom }}
+        </button>
+      }
+    </div>
+
+    @if (chargement()) {
+      <div class="grille">
+        @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+          <div class="skeleton" style="height: 190px"></div>
+        }
+      </div>
+    } @else {
+      @if (menus().length && categorie() === null && !recherche()) {
+        <div class="menus">
+          @for (m of menus(); track m.idMenu) {
+            <button class="menu" (click)="ajouterMenu(m)">
+              <app-icon name="book" [size]="18" />
+              <span>
+                <strong>{{ m.nom }}</strong>
+                <small>{{ m.plats.length }} plats</small>
+              </span>
+              <app-icon name="plus" [size]="16" />
+            </button>
+          }
+        </div>
+      }
+
+      <div class="grille">
+        @for (p of platsAffiches(); track p.idPlat) {
+          <button class="plat" [class.indispo]="p.disponible === false" (click)="ajouter(p)" [disabled]="p.disponible === false">
+            @if (p.imageUrl | img; as src) {
+              <img class="dish-visual" [src]="src" [alt]="p.nom" loading="lazy" />
+            } @else {
+              <div class="dish-visual">{{ emoji(p.categorie?.nom) }}</div>
+            }
+            @if (quantiteDe(p); as q) {
+              <span class="qte">{{ q }}</span>
+            }
+            <span class="plat-info">
+              <span class="nom">{{ p.nom }}</span>
+              <span class="prix">{{ p.disponible === false ? 'Indisponible' : (p.prix | fcfa) }}</span>
+            </span>
+          </button>
+        } @empty {
+          <div class="empty card" style="grid-column: 1 / -1">
+            <span class="empty-icon"><app-icon name="search" [size]="24" /></span>
+            <h3>Aucun plat trouvé</h3>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <aside class="ticket" [class.open]="panierOuvert()">
+    <div class="ticket-head">
+      <h2>Ticket</h2>
+      <div class="row">
+        @if (panier().length) {
+          <button class="btn btn-ghost btn-sm" (click)="vider()">Vider</button>
+        }
+        <button class="icon-btn fermer-mobile" (click)="panierOuvert.set(false)" aria-label="Fermer le ticket">
+          <app-icon name="x" />
+        </button>
+      </div>
+    </div>
+
+    <div class="types">
+      @for (t of types; track t.id) {
+        <button class="type" [class.active]="type() === t.id" (click)="type.set(t.id)">
+          <app-icon [name]="t.icone" [size]="18" />
+          {{ t.libelle }}
+        </button>
+      }
+    </div>
+
+    <div class="form ticket-form">
+      <div class="form-row">
+        <div class="field">
+          <label for="client">Client</label>
+          <select id="client" class="select" [ngModel]="clientId" (ngModelChange)="choisirClient($event)">
+            <option [ngValue]="null">Client de passage</option>
+            @for (c of clients(); track c.idClient) {
+              <option [ngValue]="c.idClient">{{ c.prenom }} {{ c.nom }}</option>
+            }
+          </select>
+        </div>
+        @if (type() === 'SUR_PLACE') {
+          <div class="field">
+            <label for="table">N° de table</label>
+            <input id="table" class="input" type="number" min="1" placeholder="Ex. 4" [(ngModel)]="numeroTable" />
+          </div>
+        }
+      </div>
+      @if (type() === 'LIVRAISON') {
+        <div class="field">
+          <label for="adresse">Adresse de livraison</label>
+          <input id="adresse" class="input" maxlength="255" placeholder="Quartier, rue, repère…" [(ngModel)]="adresse" />
+        </div>
+      }
+    </div>
+
+    <div class="lignes">
+      @for (l of panier(); track l.plat.idPlat) {
+        <div class="ligne">
+          <div class="ligne-info">
+            <span class="strong">{{ l.plat.nom }}</span>
+            <span class="small muted">{{ l.plat.prix | fcfa }}</span>
+          </div>
+          <div class="stepper">
+            <button (click)="changerQuantite(l, -1)" aria-label="Retirer un"><app-icon name="minus" [size]="14" /></button>
+            <span>{{ l.quantite }}</span>
+            <button (click)="changerQuantite(l, 1)" aria-label="Ajouter un"><app-icon name="plus" [size]="14" /></button>
+          </div>
+          <span class="ligne-total">{{ l.plat.prix * l.quantite | fcfa }}</span>
+        </div>
+      } @empty {
+        <div class="vide">
+          <app-icon name="receipt" [size]="32" [stroke]="1.5" />
+          <p>Touchez un plat pour l'ajouter au ticket.</p>
+        </div>
+      }
+    </div>
+
+    <div class="ticket-foot">
+      <textarea class="textarea" rows="2" maxlength="255" placeholder="Note pour la cuisine (allergies, cuisson…)" [(ngModel)]="notes"></textarea>
+      <div class="row between total">
+        <span>Total <small class="muted">({{ nbArticles() }} article{{ nbArticles() > 1 ? 's' : '' }})</small></span>
+        <strong>{{ total() | fcfa }}</strong>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block" [disabled]="envoi() || !panier().length" (click)="valider()">
+        @if (envoi()) {
+          <span class="spinner"></span>
+        } @else {
+          <app-icon name="check" [size]="18" />
+        }
+        {{ id() ? 'Enregistrer les modifications' : 'Valider la commande' }}
+      </button>
+    </div>
+  </aside>
+</div>
+
+<button class="voir-ticket btn btn-primary btn-lg" (click)="panierOuvert.set(true)">
+  <app-icon name="receipt" [size]="18" /> Ticket · {{ nbArticles() }} · {{ total() | fcfa }}
+</button>

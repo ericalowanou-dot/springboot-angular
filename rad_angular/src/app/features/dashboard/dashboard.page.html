@@ -1,0 +1,198 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>{{ salutation }}, {{ auth.utilisateur()?.prenom }} 👋</h1>
+      <p>Voici l'activité du restaurant · {{ aujourdHui | date: 'EEEE d MMMM y' }}</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary" (click)="charger()">
+        <app-icon name="refresh" [size]="16" /> Actualiser
+      </button>
+      <a routerLink="/commandes/nouvelle" class="btn btn-primary">
+        <app-icon name="plus" [size]="16" /> Nouvelle commande
+      </a>
+    </div>
+  </div>
+
+  @if (data(); as d) {
+    <div class="grid grid-4">
+      <div class="card stat">
+        <span class="stat-icon primary"><app-icon name="wallet" [size]="22" /></span>
+        <div>
+          <div class="stat-label">Chiffre d'affaires du jour</div>
+          <div class="stat-value">{{ d.chiffreAffairesJour | fcfa }}</div>
+          @if (d.variationJour !== 0) {
+            <span class="trend" [class.up]="d.variationJour > 0" [class.down]="d.variationJour < 0">
+              <app-icon [name]="d.variationJour > 0 ? 'trending-up' : 'trending-down'" [size]="14" />
+              {{ d.variationJour > 0 ? '+' : '' }}{{ d.variationJour.toFixed(0) }} % vs hier
+            </span>
+          }
+        </div>
+      </div>
+      <div class="card stat">
+        <span class="stat-icon info"><app-icon name="receipt" [size]="22" /></span>
+        <div>
+          <div class="stat-label">Commandes du jour</div>
+          <div class="stat-value">{{ d.commandesJour }}</div>
+          <span class="small muted">{{ d.chiffreAffairesMois | fcfa }} ce mois-ci</span>
+        </div>
+      </div>
+      <a routerLink="/commandes" class="card stat lien">
+        <span class="stat-icon warning"><app-icon name="flame" [size]="22" /></span>
+        <div>
+          <div class="stat-label">En cours de service</div>
+          <div class="stat-value">{{ d.commandesEnCours }}</div>
+          <span class="small muted">à préparer ou servir</span>
+        </div>
+      </a>
+      <div class="card stat">
+        <span class="stat-icon violet"><app-icon name="bag" [size]="22" /></span>
+        <div>
+          <div class="stat-label">Panier moyen</div>
+          <div class="stat-value">{{ d.panierMoyen | fcfa }}</div>
+          <span class="small muted">{{ d.totalClients }} clients · {{ d.totalPlats }} plats</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid deux-tiers mt">
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Ventes des 7 derniers jours</h2>
+            <p class="small muted">{{ totalSemaine() | fcfa }} au total</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart" role="img" aria-label="Histogramme des ventes sur 7 jours">
+            @for (b of barres(); track b.date; let dernier = $last) {
+              <div class="col">
+                <div class="bar-zone">
+                  <div class="bar" [class.today]="dernier" [style.height.%]="b.hauteur">
+                    <span class="tip">{{ b.libelle }}<br /><small>{{ b.commandes }} cmd</small></span>
+                  </div>
+                </div>
+                <span class="jour">{{ b.date | date: 'EEE' }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Statut des commandes</h2></div>
+        <div class="card-body stack">
+          @for (r of repartition(); track r.statut) {
+            <div>
+              <div class="row between small">
+                <span class="badge {{ statuts[r.statut]?.ton }}">{{ r.statut | libelle: 'statut' }}</span>
+                <strong>{{ r.n }}</strong>
+              </div>
+              <div class="progress"><span class="{{ statuts[r.statut]?.ton }}" [style.width.%]="r.pct"></span></div>
+            </div>
+          } @empty {
+            <p class="muted">Aucune commande enregistrée.</p>
+          }
+        </div>
+      </section>
+    </div>
+
+    <div class="grid deux-tiers mt">
+      <section class="card">
+        <div class="card-head">
+          <h2>Dernières commandes</h2>
+          <a routerLink="/commandes" class="btn btn-ghost btn-sm">Tout voir <app-icon name="chevron-right" [size]="14" /></a>
+        </div>
+        <div class="table-wrap mt">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Client</th>
+                <th class="hide-sm">Type</th>
+                <th>Statut</th>
+                <th class="right">Montant</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of d.dernieresCommandes; track c.idCommande) {
+                <tr>
+                  <td class="strong">#{{ c.idCommande }}</td>
+                  <td>{{ c.client ? c.client.prenom + ' ' + c.client.nom : 'Client de passage' }}</td>
+                  <td class="hide-sm muted">{{ c.type | libelle: 'type' }}</td>
+                  <td><span class="badge {{ statuts[c.statut ?? '']?.ton }}">{{ c.statut | libelle: 'statut' }}</span></td>
+                  <td class="right strong nowrap">{{ c.montantTotal | fcfa }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" class="muted">Aucune commande pour le moment.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="stack">
+        <section class="card">
+          <div class="card-head"><h2>Plats les plus vendus</h2></div>
+          <div class="card-body stack top">
+            @for (p of d.topPlats; track p.idPlat; let i = $index) {
+              <div class="row">
+                <span class="rang">{{ i + 1 }}</span>
+                @if (p.imageUrl | img; as src) {
+                  <img class="thumb" [src]="src" [alt]="p.nom" />
+                } @else {
+                  <span class="thumb">🍽️</span>
+                }
+                <div class="grow">
+                  <div class="strong">{{ p.nom }}</div>
+                  <div class="small muted">{{ p.quantite }} vendus</div>
+                </div>
+                <span class="small strong nowrap">{{ p.montant | fcfa }}</span>
+              </div>
+            } @empty {
+              <p class="muted">Pas encore de ventes.</p>
+            }
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>Alertes de stock</h2>
+            @if (d.produitsEnAlerte.length) {
+              <span class="badge danger plain">{{ d.produitsEnAlerte.length }}</span>
+            }
+          </div>
+          <div class="card-body stack">
+            @for (p of d.produitsEnAlerte; track p.idProduit) {
+              <div class="row between">
+                <div class="row">
+                  <span class="stat-icon warning mini"><app-icon name="alert" [size]="16" /></span>
+                  <div>
+                    <div class="strong">{{ p.nom }}</div>
+                    <div class="small muted">Seuil : {{ p.seuil }} {{ p.unite }}</div>
+                  </div>
+                </div>
+                <span class="badge danger plain">{{ p.quantiteStock }} {{ p.unite }}</span>
+              </div>
+            } @empty {
+              <div class="row ok"><app-icon name="check" [size]="16" /> Tous les stocks sont au-dessus du seuil.</div>
+            }
+            @if (d.produitsEnAlerte.length && auth.peutGerer()) {
+              <a routerLink="/approvisionnements" class="btn btn-secondary btn-sm">Réapprovisionner</a>
+            }
+          </div>
+        </section>
+      </div>
+    </div>
+  } @else {
+    <div class="grid grid-4">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="skeleton" style="height: 110px"></div>
+      }
+    </div>
+    <div class="grid deux-tiers mt">
+      <div class="skeleton" style="height: 300px"></div>
+      <div class="skeleton" style="height: 300px"></div>
+    </div>
+  }
+</div>

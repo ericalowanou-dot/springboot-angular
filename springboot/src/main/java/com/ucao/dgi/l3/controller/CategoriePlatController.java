@@ -1,57 +1,45 @@
 package com.ucao.dgi.l3.controller;
 
 import com.ucao.dgi.l3.entity.CategoriePlat;
-import com.ucao.dgi.l3.entity.Plat;
-import com.ucao.dgi.l3.service.impl.CategoriePlatServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ucao.dgi.l3.service.CategoriePlatService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("/categorie_plats")
-@CrossOrigin("*")
 @RestController
+@RequestMapping("/api/categories")
+@RequiredArgsConstructor
 public class CategoriePlatController {
 
-    @Autowired
-    private CategoriePlatServiceImpl categoriePlatServiceImpl;
+    private final CategoriePlatService categoriePlatService;
 
-    @GetMapping("/find_all")
+    @GetMapping
     public List<CategoriePlat> findAll() {
-        return categoriePlatServiceImpl.findAll();
+        return categoriePlatService.findAll();
     }
 
-    @GetMapping("/find_by_id/{id}")
+    @GetMapping("/{id}")
     public CategoriePlat findById(@PathVariable Integer id) {
-        return categoriePlatServiceImpl.findById(id);
+        return categoriePlatService.findById(id);
     }
 
-    @PostMapping("/save")
-    public CategoriePlat save(@RequestBody CategoriePlat categoriePlat) {
-        return categoriePlatServiceImpl.save(categoriePlat);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CategoriePlat save(@Valid @RequestBody CategoriePlat categorie) {
+        return categoriePlatService.save(categorie);
     }
 
-    @PutMapping("/update/{id}")
-    public CategoriePlat update(@PathVariable Integer id, @RequestBody CategoriePlat categoriePlat) {
-        categoriePlat.setIdCategorie(id);
-        return categoriePlatServiceImpl.update(categoriePlat);
+    @PutMapping("/{id}")
+    public CategoriePlat update(@PathVariable Integer id, @Valid @RequestBody CategoriePlat categorie) {
+        return categoriePlatService.update(id, categorie);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public CategoriePlat delete(@PathVariable Integer id) {
-        CategoriePlat categoriePlat = new CategoriePlat();
-        categoriePlat.setIdCategorie(id);
-        return categoriePlatServiceImpl.delete(categoriePlat);
-    }
-
-    @GetMapping("/find_by_nom/{nomCategorie}")
-    public CategoriePlat findByNomCategorie(@PathVariable String nomCategorie) {
-        return categoriePlatServiceImpl.findByNomCategorie(nomCategorie);
-    }
-
-    @GetMapping("/find_all_plats/{idCategorie}")
-    public List<Plat> findAllPlatsInCategorie(@PathVariable Integer idCategorie) {
-        return categoriePlatServiceImpl.findAllPlatsInCategorie(idCategorie);
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Integer id) {
+        categoriePlatService.delete(id);
     }
 }
-

@@ -1,0 +1,142 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Plats</h1>
+      <p>Composez votre carte : photos, prix, disponibilité.</p>
+    </div>
+    @if (auth.peutGerer()) {
+      <button class="btn btn-primary" (click)="ouvrir()"><app-icon name="plus" [size]="16" /> Nouveau plat</button>
+    }
+  </div>
+
+  <div class="filtres">
+    <div class="segmented">
+      <button [class.active]="categorie() === null" (click)="categorie.set(null)">Toutes</button>
+      @for (c of categories(); track c.idCategorie) {
+        <button [class.active]="categorie() === c.idCategorie" (click)="categorie.set(c.idCategorie ?? null)">
+          {{ emoji(c.nom) }} {{ c.nom }}
+        </button>
+      }
+    </div>
+    <div class="input-icon recherche">
+      <app-icon name="search" [size]="16" />
+      <input class="input" placeholder="Rechercher…" [ngModel]="recherche()" (ngModelChange)="recherche.set($event)" />
+    </div>
+  </div>
+
+  @if (plats() === null) {
+    <div class="cards">
+      @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+        <div class="skeleton" style="height: 300px"></div>
+      }
+    </div>
+  } @else {
+    <div class="cards">
+      @for (p of affiches(); track p.idPlat) {
+        <article class="card plat" [class.indispo]="p.disponible === false">
+          <div class="visuel">
+            @if (p.imageUrl | img; as src) {
+              <img class="dish-visual" [src]="src" [alt]="p.nom" loading="lazy" />
+            } @else {
+              <div class="dish-visual">{{ emoji(p.categorie?.nom) }}</div>
+            }
+            @if (p.categorie) {
+              <span class="cat-badge">{{ p.categorie.nom }}</span>
+            }
+            @if (p.disponible === false) {
+              <span class="indispo-badge">Indisponible</span>
+            }
+          </div>
+          <div class="corps">
+            <div class="row between">
+              <h3>{{ p.nom }}</h3>
+              <span class="prix">{{ p.prix | fcfa }}</span>
+            </div>
+            <p class="desc">{{ p.description || 'Aucune description.' }}</p>
+            @if (auth.peutGerer()) {
+              <div class="row between pied">
+                <label class="switch small">
+                  <input type="checkbox" [checked]="p.disponible !== false" (change)="basculerDisponibilite(p)" />
+                  Disponible
+                </label>
+                <div class="row">
+                  <button class="icon-btn" title="Modifier" (click)="ouvrir(p)"><app-icon name="pencil" [size]="16" /></button>
+                  <button class="icon-btn danger" title="Supprimer" (click)="supprimer(p)"><app-icon name="trash" [size]="16" /></button>
+                </div>
+              </div>
+            }
+          </div>
+        </article>
+      } @empty {
+        <div class="empty card" style="grid-column: 1 / -1">
+          <span class="empty-icon"><app-icon name="utensils" [size]="26" /></span>
+          <h3>Aucun plat</h3>
+          <p>Ajoutez votre premier plat pour remplir la carte.</p>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (form(); as f) {
+  <app-modal [titre]="f.idPlat ? 'Modifier le plat' : 'Nouveau plat'" taille="lg" (fermer)="form.set(null)">
+    <form #ngf="ngForm" class="editeur" id="form-plat" (ngSubmit)="enregistrer(ngf)">
+      <div class="photo">
+        <label class="drop" [class.chargement]="upload()">
+          @if (f.imageUrl | img; as src) {
+            <img [src]="src" alt="Aperçu du plat" />
+          } @else {
+            <span class="placeholder">
+              <app-icon name="image" [size]="30" [stroke]="1.5" />
+              <span>Ajouter une photo</span>
+              <small>JPEG, PNG ou WebP · 5 Mo max</small>
+            </span>
+          }
+          @if (upload()) {
+            <span class="voile"><span class="spinner"></span></span>
+          }
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="choisirImage($event, f)" hidden />
+        </label>
+        @if (f.imageUrl) {
+          <button type="button" class="btn btn-ghost btn-sm" (click)="retirerImage(f)">
+            <app-icon name="trash" [size]="14" /> Retirer la photo
+          </button>
+        }
+      </div>
+
+      <div class="form">
+        <div class="field">
+          <label for="nom">Nom du plat</label>
+          <input id="nom" class="input" name="nom" required maxlength="50" [(ngModel)]="f.nom" />
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="prix">Prix (FCFA)</label>
+            <input id="prix" class="input" type="number" min="0" step="50" name="prix" required [(ngModel)]="f.prix" />
+          </div>
+          <div class="field">
+            <label for="cat">Catégorie</label>
+            <select id="cat" class="select" name="categorie" [(ngModel)]="f.categorieId">
+              <option [ngValue]="null">Sans catégorie</option>
+              @for (c of categories(); track c.idCategorie) {
+                <option [ngValue]="c.idCategorie">{{ c.nom }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="desc">Description</label>
+          <textarea id="desc" class="textarea" name="description" maxlength="255" rows="3" [(ngModel)]="f.description"></textarea>
+        </div>
+        <label class="switch">
+          <input type="checkbox" name="disponible" [(ngModel)]="f.disponible" />
+          Proposé à la commande
+        </label>
+      </div>
+    </form>
+    <div pied>
+      <button class="btn btn-secondary" (click)="form.set(null)">Annuler</button>
+      <button class="btn btn-primary" type="submit" form="form-plat" [disabled]="envoi() || upload()">Enregistrer</button>
+    </div>
+  </app-modal>
+}

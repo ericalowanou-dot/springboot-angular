@@ -1,73 +1,74 @@
 package com.ucao.dgi.l3.service.impl;
 
-import com.ucao.dgi.l3.dto.PersonnelDTO;
-import com.ucao.dgi.l3.entity.MembrePersonnel;
 import com.ucao.dgi.l3.entity.Personnel;
+import com.ucao.dgi.l3.exception.RegleMetierException;
+import com.ucao.dgi.l3.exception.RessourceIntrouvableException;
 import com.ucao.dgi.l3.repository.PersonnelRepository;
 import com.ucao.dgi.l3.service.PersonnelService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class PersonnelServiceImpl implements PersonnelService {
 
-    @Autowired
-    private PersonnelRepository personnelRepository;
+    private final PersonnelRepository personnelRepository;
 
     @Override
-    public List<Personnel> findAllPersonnel() {
-        return personnelRepository.findAll();
-    }
-
-    @Override
-    public Personnel findPersonnelById(Integer idPersonnel) {
-        return personnelRepository.findById(idPersonnel).orElse(null);
-    }
-
-    @Override
-    public Personnel savePersonnel(PersonnelDTO personnelDTO) {
-        MembrePersonnel personnel = new MembrePersonnel();
-        personnel.setNom(personnelDTO.getNom());
-        personnel.setPrenom(personnelDTO.getPrenom());
-        personnel.setFonction(personnelDTO.getFonction());
-        return personnelRepository.save(personnel);
-    }
-
-    @Override
-    public Personnel updatePersonnel(PersonnelDTO personnelDTO) {
-        Personnel personnel = personnelRepository.findById(personnelDTO.getIdPersonnel())
-                .orElse(new MembrePersonnel());
-        
-        personnel.setNom(personnelDTO.getNom());
-        personnel.setPrenom(personnelDTO.getPrenom());
-        personnel.setFonction(personnelDTO.getFonction());
-        
-        return personnelRepository.save(personnel);
-    }
-
-    @Override
-    public Personnel deletePersonnel(Integer idPersonnel) {
-        Personnel p = personnelRepository.findById(idPersonnel).orElse(null);
-        if (p != null) {
-            personnelRepository.delete(p);
+    @Transactional(readOnly = true)
+    public List<Personnel> findAll(String fonction) {
+        if (fonction != null && !fonction.isBlank()) {
+            return personnelRepository.findAllByFonctionIgnoreCase(fonction);
         }
+        return personnelRepository.findAll(Sort.by("nom", "prenom"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Personnel findById(Integer id) {
+        return personnelRepository.findById(id).orElseThrow(() -> new RessourceIntrouvableException("Employé", id));
+    }
+
+    @Override
+    public Personnel save(Personnel personnel) {
+        personnel.setIdPersonnel(null);
+        personnel.setFonction(normaliserFonction(personnel.getFonction()));
+        if (personnel.getActif() == null) {
+            personnel.setActif(true);
+        }
+        return personnelRepository.save(personnel);
+    }
+
+    @Override
+    public Personnel update(Integer id, Personnel donnees) {
+        Personnel p = findById(id);
+        p.setNom(donnees.getNom());
+        p.setPrenom(donnees.getPrenom());
+        p.setFonction(normaliserFonction(donnees.getFonction()));
+        p.setTelephone(donnees.getTelephone());
+        p.setEmail(donnees.getEmail());
+        p.setSalaire(donnees.getSalaire());
+        p.setDateEmbauche(donnees.getDateEmbauche());
+        p.setActif(donnees.getActif() == null || donnees.getActif());
         return p;
     }
 
     @Override
-    public Personnel findPersonnelServeur() {
-        return personnelRepository.findByFonction("Serveur");
+    public void delete(Integer id) {
+        personnelRepository.delete(findById(id));
+        personnelRepository.flush(); // remonte immédiatement une éventuelle violation de clé étrangère
     }
 
-    @Override
-    public Personnel findPersonnelLivreur() {
-        return personnelRepository.findByFonction("Livreur");
-    }
-
-    @Override
-    public Personnel findPersonnelChef() {
-        return personnelRepository.findByFonction("Chef");
+    private String normaliserFonction(String fonction) {
+        String f = fonction == null ? "" : fonction.trim().toUpperCase();
+        if (!Personnel.FONCTIONS.contains(f)) {
+            throw new RegleMetierException("Fonction inconnue : " + fonction);
+        }
+        return f;
     }
 }

@@ -1,0 +1,103 @@
+<header class="nav">
+  <div class="brand">
+    <span class="logo"><app-icon name="chef" [size]="20" /></span>
+    <strong>Le Gourmet</strong>
+  </div>
+  <div class="row">
+    <button class="icon-btn" (click)="theme.basculer()" aria-label="Changer de thème">
+      <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+    </button>
+    @if (auth.connecte()) {
+      <a routerLink="/dashboard" class="btn btn-secondary btn-sm">Mon espace</a>
+    } @else {
+      <a routerLink="/login" class="btn btn-secondary btn-sm">Espace personnel</a>
+    }
+  </div>
+</header>
+
+<section class="banner">
+  <p class="eyebrow">Cuisine togolaise & africaine</p>
+  <h1>Notre carte</h1>
+  <p>Des plats préparés chaque jour avec des produits frais du marché.</p>
+</section>
+
+<div class="contenu">
+  @if (chargement()) {
+    <div class="cards">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <div class="skeleton" style="height: 280px"></div>
+      }
+    </div>
+  } @else if (erreur()) {
+    <div class="empty card">
+      <span class="empty-icon"><app-icon name="alert" [size]="26" /></span>
+      <h3>Carte indisponible</h3>
+      <p>Le serveur ne répond pas pour le moment. Réessayez dans quelques instants.</p>
+    </div>
+  } @else {
+    @if (menus().length) {
+      <h2 class="section-titre">Nos formules</h2>
+      <div class="menus">
+        @for (m of menus(); track m.idMenu) {
+          <article class="menu-card">
+            <div>
+              <h3>{{ m.nom }}</h3>
+              <p>{{ m.description }}</p>
+              <div class="menu-plats">
+                @for (p of m.plats; track p.idPlat) {
+                  <span class="chip">{{ p.nom }}</span>
+                }
+              </div>
+            </div>
+            <div class="menu-prix">
+              <strong>{{ m.prix | fcfa }}</strong>
+              @if ((m.prixSepare ?? 0) > m.prix) {
+                <small>au lieu de {{ m.prixSepare | fcfa }}</small>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    <h2 class="section-titre">À la carte</h2>
+    <div class="filtres">
+      <button class="filtre" [class.active]="filtre() === null" (click)="filtre.set(null)">Tout</button>
+      @for (c of categories(); track c.idCategorie) {
+        <button
+          class="filtre"
+          [class.active]="filtre() === c.idCategorie"
+          (click)="filtre.set(c.idCategorie ?? null)"
+        >
+          {{ emoji(c.nom) }} {{ c.nom }}
+        </button>
+      }
+    </div>
+
+    <div class="cards">
+      @for (p of platsAffiches(); track p.idPlat) {
+        <article class="dish card">
+          @if (p.imageUrl | img; as src) {
+            <img class="dish-visual" [src]="src" [alt]="p.nom" loading="lazy" />
+          } @else {
+            <div class="dish-visual">{{ emoji(p.categorie?.nom) }}</div>
+          }
+          <div class="dish-body">
+            <div class="row between">
+              <h3>{{ p.nom }}</h3>
+              <span class="prix">{{ p.prix | fcfa }}</span>
+            </div>
+            <p>{{ p.description }}</p>
+          </div>
+        </article>
+      } @empty {
+        <div class="empty card" style="grid-column: 1 / -1">
+          <span class="empty-icon"><app-icon name="utensils" [size]="26" /></span>
+          <h3>Aucun plat pour le moment</h3>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<footer class="pied">© Le Gourmet · Lomé — Ouvert tous les jours de 11h à 23h</footer>
