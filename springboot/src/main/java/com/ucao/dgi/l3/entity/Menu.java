@@ -45,6 +45,11 @@ public class Menu implements Serializable {
     @JsonIgnoreProperties({"categorie", "lignes"})
     private List<Plat> plats = new ArrayList<>();
 
+    /** Une formule se commande si elle contient des plats et qu'ils sont tous disponibles. */
+    public boolean isCommandable() {
+        return plats != null && !plats.isEmpty() && plats.stream().allMatch(Plat::isCommandable);
+    }
+
     /** Somme des prix des plats pris séparément (pour afficher l'économie réalisée). */
     public double getPrixSepare() {
         return plats == null ? 0 : plats.stream().mapToDouble(p -> p.getPrix() == null ? 0 : p.getPrix()).sum();

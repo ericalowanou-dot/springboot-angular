@@ -8,6 +8,7 @@ import com.ucao.dgi.l3.exception.RessourceIntrouvableException;
 import com.ucao.dgi.l3.repository.ClientRepository;
 import com.ucao.dgi.l3.repository.CommandeRepository;
 import com.ucao.dgi.l3.repository.LivraisonRepository;
+import com.ucao.dgi.l3.repository.MenuRepository;
 import com.ucao.dgi.l3.repository.PlatRepository;
 import com.ucao.dgi.l3.service.CommandeService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class CommandeServiceImpl implements CommandeService {
     private final ClientRepository clientRepository;
     private final PlatRepository platRepository;
     private final LivraisonRepository livraisonRepository;
+    private final MenuRepository menuRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -149,6 +151,18 @@ public class CommandeServiceImpl implements CommandeService {
         commande.setClient(client);
 
         for (LigneRequest l : requete.lignes()) {
+            if ((l.platId() == null) == (l.menuId() == null)) {
+                throw new RegleMetierException("Chaque ligne doit contenir soit un plat, soit une formule");
+            }
+            if (l.menuId() != null) {
+                Menu menu = menuRepository.findById(l.menuId())
+                        .orElseThrow(() -> new RessourceIntrouvableException("Formule", l.menuId()));
+                if (!menu.isCommandable()) {
+                    throw new RegleMetierException("La formule « " + menu.getNom() + " » n'est pas disponible");
+                }
+                commande.ajouterLigne(new LigneCommande(menu, l.quantite()));
+                continue;
+            }
             Plat plat = platRepository.findById(l.platId())
                     .orElseThrow(() -> new RessourceIntrouvableException("Plat", l.platId()));
             if (!plat.isCommandable()) {

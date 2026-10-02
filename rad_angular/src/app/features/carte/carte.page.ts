@@ -6,7 +6,7 @@ import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { FcfaPipe, ImagePipe, emojiCategorie } from '../../core/format';
 import { Categorie, Menu, Plat } from '../../core/models';
-import { PanierService } from '../../core/panier.service';
+import { PanierService, cleMenu, clePlat } from '../../core/panier.service';
 import { stockage } from '../../core/stockage';
 import { ThemeService } from '../../core/theme.service';
 import { ToastService } from '../../core/toast.service';
@@ -52,6 +52,8 @@ export class CartePage {
   protected coord: Coordonnees = this.coordonneesMemorisees();
 
   protected emoji = emojiCategorie;
+  protected clePlat = clePlat;
+  protected cleMenu = cleMenu;
 
   protected platsAffiches = computed(() => {
     const f = this.filtre();
@@ -70,7 +72,7 @@ export class CartePage {
         this.categories.set(r.categories.filter((c) => (c.nombrePlats ?? 0) > 0));
         this.plats.set(r.plats);
         this.menus.set(r.menus);
-        this.panier.synchroniser(r.plats);
+        this.panier.synchroniser(r.plats, r.menus);
         this.chargement.set(false);
       },
       error: () => {
@@ -104,7 +106,7 @@ export class CartePage {
         telephone: this.coord.telephone.trim(),
         adresse: this.coord.type === 'LIVRAISON' ? this.coord.adresse.trim() : null,
         notes: this.coord.notes.trim() || null,
-        lignes: this.panier.lignes().map((l) => ({ platId: l.platId, quantite: l.quantite })),
+        lignes: this.panier.requete(),
       })
       .subscribe({
         next: (r) => {

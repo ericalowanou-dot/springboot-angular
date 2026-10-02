@@ -38,6 +38,12 @@ public class LigneCommande implements Serializable {
     @JsonIgnoreProperties({"lignes", "categorie"})
     private Plat plat;
 
+    // 🔹 ... ou une formule (menu), facturée au prix de la formule
+    @ManyToOne
+    @JoinColumn(name = "menu_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Menu menu;
+
     @ManyToOne
     @JoinColumn(name = "panier_id")
     @JsonIgnore
@@ -50,5 +56,20 @@ public class LigneCommande implements Serializable {
         this.quantite = quantite;
         this.prixUnitaire = plat.getPrix();
         this.sousTotal = plat.getPrix() * quantite;
+    }
+
+    public LigneCommande(Menu menu, int quantite) {
+        this.menu = menu;
+        this.quantite = quantite;
+        this.prixUnitaire = menu.getPrix();
+        this.sousTotal = menu.getPrix() * quantite;
+    }
+
+    /** Nom affiché sur le ticket : le plat, ou la formule. */
+    public String getLibelle() {
+        if (menu != null) {
+            return menu.getNom();
+        }
+        return plat == null ? "Article" : plat.getNom();
     }
 }

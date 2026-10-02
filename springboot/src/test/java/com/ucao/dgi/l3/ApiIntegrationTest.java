@@ -225,6 +225,40 @@ class ApiIntegrationTest {
         appel(post("/api/public/commandes"), corps, 429);
     }
 
+    @Test
+    void formuleCommandeeAuPrixDeLaFormule() throws Exception {
+        int a = creerPlat("Salade", 1500);
+        int b = creerPlat("Riz", 3000);
+        long menu = appel(post("/api/menus"), "{\"nom\":\"Midi\",\"prix\":4000,\"plats\":[{\"idPlat\":%d},{\"idPlat\":%d}]}"
+                .formatted(a, b), 201).get("idMenu").asLong();
+
+        // en caisse : 2 formules + 1 plat = 2 × 4000 + 1500
+        JsonNode cmd = appel(post("/api/commandes"),
+                "{\"lignes\":[{\"menuId\":%d,\"quantite\":2},{\"platId\":%d,\"quantite\":1}]}".formatted(menu, a), 201);
+        assertThat(cmd.get("montantTotal").asDouble()).isEqualTo(9500.0);
+        assertThat(cmd.get("lignes").get(0).get("libelle").asText()).isEqualTo("Midi");
+
+        // une ligne doit avoir soit un plat, soit une formule
+        appel(post("/api/commandes"),
+                "{\"lignes\":[{\"menuId\":%d,\"platId\":%d,\"quantite\":1}]}".formatted(menu, a), 409);
+        appel(post("/api/commandes"), "{\"lignes\":[{\"quantite\":1}]}", 409);
+
+        // une formule dont un plat est indisponible ne se commande pas
+        appel(patch("/api/plats/" + b + "/disponibilite?disponible=false"), null, 200);
+        appel(post("/api/commandes"), "{\"lignes\":[{\"menuId\":%d,\"quantite\":1}]}".formatted(menu), 409);
+        appel(patch("/api/plats/" + b + "/disponibilite?disponible=true"), null, 200);
+
+        // en ligne aussi, et le suivi affiche le nom de la formule
+        token = null;
+        JsonNode recu = appel(post("/api/public/commandes"),
+                "{\"type\":\"A_EMPORTER\",\"nom\":\"Edem\",\"telephone\":\"93445566\",\"lignes\":[{\"menuId\":%d,\"quantite\":1}]}"
+                        .formatted(menu), 201);
+        assertThat(recu.get("montantTotal").asDouble()).isEqualTo(4000.0);
+        JsonNode suivi = appel(get("/api/public/commandes/" + recu.get("codeSuivi").asText()), null, 200);
+        assertThat(suivi.get("lignes").get(0).get("plat").asText()).isEqualTo("Midi");
+        assertThat(suivi.get("lignes").get(0).get("formule").asBoolean()).isTrue();
+    }
+
     private String jeton(String email, String motDePasse) throws Exception {
         String reponse = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, motDePasse)))

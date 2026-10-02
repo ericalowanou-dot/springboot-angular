@@ -60,6 +60,7 @@ export interface Menu {
   prix: number;
   plats: Plat[];
   prixSepare?: number;
+  commandable?: boolean;
 }
 
 export interface Client {
@@ -80,7 +81,17 @@ export interface LigneCommande {
   quantite: number;
   prixUnitaire: number;
   sousTotal: number;
-  plat: Plat;
+  /** Une ligne porte soit un plat, soit une formule. */
+  plat?: Plat | null;
+  menu?: Menu | null;
+  libelle: string;
+}
+
+/** Ligne envoyée à l'API : platId ou menuId. */
+export interface LigneRequete {
+  platId?: number | null;
+  menuId?: number | null;
+  quantite: number;
 }
 
 export interface Paiement {
@@ -129,7 +140,7 @@ export interface CommandeEnLigneRequest {
   telephone: string;
   adresse?: string | null;
   notes?: string | null;
-  lignes: { platId: number; quantite: number }[];
+  lignes: LigneRequete[];
 }
 
 export interface SuiviCommande {
@@ -140,7 +151,7 @@ export interface SuiviCommande {
   creeLe: string | null;
   montantTotal: number;
   payee: boolean;
-  lignes: { plat: string; quantite: number; sousTotal: number }[];
+  lignes: { plat: string; formule: boolean; quantite: number; sousTotal: number }[];
   statutLivraison: StatutLivraison | null;
   heureDepart: string | null;
   heureFin: string | null;
@@ -152,7 +163,7 @@ export interface CommandeRequest {
   numeroTable?: number | null;
   notes?: string | null;
   adresseLivraison?: string | null;
-  lignes: { platId: number; quantite: number }[];
+  lignes: LigneRequete[];
 }
 
 export interface Personnel {

@@ -9,7 +9,13 @@ import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../ui/icon.component';
 
 interface LignePanier {
-  plat: Plat;
+  /** « p12 » pour un plat, « m3 » pour une formule. */
+  cle: string;
+  platId?: number;
+  menuId?: number;
+  nom: string;
+  prix: number;
+  detail?: string;
   quantite: number;
 }
 
@@ -64,9 +70,7 @@ export class CaissePage implements OnInit {
     );
   });
 
-  protected total = computed(() =>
-    this.panier().reduce((s, l) => s + l.plat.prix * l.quantite, 0),
-  );
+  protected total = computed(() => this.panier().reduce((s, l) => s + l.prix * l.quantite, 0));
   protected nbArticles = computed(() => this.panier().reduce((s, l) => s + l.quantite, 0));
 
   ngOnInit(): void {
@@ -104,10 +108,11 @@ export class CaissePage implements OnInit {
         this.adresse = c.livraison?.adresseDestination ?? '';
         this.notes = c.notes ?? '';
         this.panier.set(
-          c.lignes.map((l) => ({
-            plat: this.plats().find((p) => p.idPlat === l.plat.idPlat) ?? l.plat,
-            quantite: l.quantite,
-          })),
+          c.lignes.map((l) =>
+            l.menu
+              ? this.ligneMenu(this.menus().find((m) => m.idMenu === l.menu!.idMenu) ?? l.menu, l.quantite)
+              : this.lignePlat(this.plats().find((p) => p.idPlat === l.plat?.idPlat) ?? l.plat!, l.quantite),
+          ),
         );
         this.chargement.set(false);
       },
@@ -120,18 +125,39 @@ export class CaissePage implements OnInit {
 
   ajouter(plat: Plat): void {
     if (plat.disponible === false) return;
-    this.panier.update((lignes) => {
-      const existante = lignes.find((l) => l.plat.idPlat === plat.idPlat);
-      return existante
-        ? lignes.map((l) => (l === existante ? { ...l, quantite: l.quantite + 1 } : l))
-        : [...lignes, { plat, quantite: 1 }];
-    });
+    this.ajouterLigne(this.lignePlat(plat, 1));
   }
 
-  /** Un menu ajoute chacun de ses plats (le prix appliqué reste celui des plats). */
+  /** Une formule est une ligne à part entière, facturée au prix de la formule. */
   ajouterMenu(menu: Menu): void {
-    menu.plats.forEach((p) => this.ajouter(this.plats().find((x) => x.idPlat === p.idPlat) ?? p));
-    this.toasts.info(`${menu.nom} ajouté au ticket`);
+    if (menu.commandable === false) {
+      this.toasts.erreur(`La formule « ${menu.nom} » contient un plat indisponible.`);
+      return;
+    }
+    this.ajouterLigne(this.ligneMenu(menu, 1));
+  }
+
+  private ajouterLigne(nouvelle: LignePanier): void {
+    this.panier.update((lignes) =>
+      lignes.some((l) => l.cle === nouvelle.cle)
+        ? lignes.map((l) => (l.cle === nouvelle.cle ? { ...l, quantite: l.quantite + 1 } : l))
+        : [...lignes, nouvelle],
+    );
+  }
+
+  private lignePlat(plat: Plat, quantite: number): LignePanier {
+    return { cle: `p${plat.idPlat}`, platId: plat.idPlat, nom: plat.nom, prix: plat.prix, quantite };
+  }
+
+  private ligneMenu(menu: Menu, quantite: number): LignePanier {
+    return {
+      cle: `m${menu.idMenu}`,
+      menuId: menu.idMenu,
+      nom: menu.nom,
+      prix: menu.prix,
+      detail: menu.plats.map((p) => p.nom).join(', '),
+      quantite,
+    };
   }
 
   changerQuantite(ligne: LignePanier, delta: number): void {
@@ -143,7 +169,11 @@ export class CaissePage implements OnInit {
   }
 
   quantiteDe(plat: Plat): number {
-    return this.panier().find((l) => l.plat.idPlat === plat.idPlat)?.quantite ?? 0;
+    return this.panier().find((l) => l.cle === `p${plat.idPlat}`)?.quantite ?? 0;
+  }
+
+  quantiteMenu(menu: Menu): number {
+    return this.panier().find((l) => l.cle === `m${menu.idMenu}`)?.quantite ?? 0;
   }
 
   vider(): void {
@@ -171,7 +201,9 @@ export class CaissePage implements OnInit {
       numeroTable: this.type() === 'SUR_PLACE' ? this.numeroTable : null,
       adresseLivraison: this.type() === 'LIVRAISON' ? this.adresse.trim() : null,
       notes: this.notes.trim() || null,
-      lignes: this.panier().map((l) => ({ platId: l.plat.idPlat!, quantite: l.quantite })),
+      lignes: this.panier().map((l) =>
+        l.menuId ? { menuId: l.menuId, quantite: l.quantite } : { platId: l.platId, quantite: l.quantite },
+      ),
     };
     const id = this.id();
     this.envoi.set(true);

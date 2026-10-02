@@ -39,7 +39,7 @@ public final class EnLigneDtos {
             return new SuiviCommande(c.getCodeSuivi(), c.getIdCommande(), c.getStatut(), c.getType(), c.getCreeLe(),
                     c.getMontantTotal() == null ? 0 : c.getMontantTotal(), c.isPayee(),
                     c.getLignes().stream()
-                            .map(lg -> new LigneSuivi(lg.getPlat() == null ? "Plat" : lg.getPlat().getNom(),
+                            .map(lg -> new LigneSuivi(lg.getLibelle(), lg.getMenu() != null,
                                     lg.getQuantite(), lg.getSousTotal() == null ? 0 : lg.getSousTotal()))
                             .toList(),
                     l == null ? null : l.getStatut(), l == null ? null : l.getHeureDepart(),
@@ -47,6 +47,6 @@ public final class EnLigneDtos {
         }
     }
 
-    public record LigneSuivi(String plat, int quantite, double sousTotal) {
+    public record LigneSuivi(String plat, boolean formule, int quantite, double sousTotal) {
     }
 }

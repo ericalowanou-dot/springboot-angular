@@ -84,7 +84,7 @@
       <h3 class="titre">Récapitulatif</h3>
       @for (l of s.lignes; track $index) {
         <div class="row between ligne">
-          <span><strong>{{ l.quantite }}×</strong> {{ l.plat }}</span>
+          <span><strong>{{ l.quantite }}×</strong> {{ l.formule ? '🍱 ' : '' }}{{ l.plat }}</span>
           <span class="nowrap">{{ l.sousTotal | fcfa }}</span>
         </div>
       }

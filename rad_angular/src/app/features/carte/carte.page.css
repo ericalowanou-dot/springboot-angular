@@ -120,14 +120,18 @@
 
 .menus {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
+}
+
+.section-titre.premier {
+  margin-top: 0;
 }
 
 .menu-card {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  gap: 14px;
   padding: 22px;
   border-radius: 18px;
   border: 1px solid var(--border);
@@ -144,7 +148,21 @@
   color: var(--muted);
 }
 
+.menu-card.dans-panier {
+  border-color: var(--primary);
+}
+
+.menu-card.indispo {
+  opacity: 0.6;
+}
+
+.haut {
+  align-items: flex-start;
+}
+
 .menu-plats {
+  flex: 1;
+  align-content: flex-start;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;

@@ -152,7 +152,13 @@
         <tbody>
           @for (l of c.lignes; track l.idLigne) {
             <tr>
-              <td class="strong">{{ l.plat.nom }}</td>
+              <td>
+                <span class="strong">{{ l.libelle }}</span>
+                @if (l.menu) {
+                  <span class="badge violet plain">Formule</span>
+                  <div class="small muted">{{ platsDuMenu(l.menu) }}</div>
+                }
+              </td>
               <td class="right muted nowrap">{{ l.prixUnitaire | fcfa }}</td>
               <td class="right">× {{ l.quantite }}</td>
               <td class="right strong nowrap">{{ l.sousTotal | fcfa }}</td>

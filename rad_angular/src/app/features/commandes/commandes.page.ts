@@ -162,6 +162,10 @@ export class CommandesPage {
     this.router.navigate(['/commandes', c.idCommande, 'modifier']);
   }
 
+  platsDuMenu(menu: { plats?: { nom: string }[] }): string {
+    return (menu.plats ?? []).map((p) => p.nom).join(', ');
+  }
+
   imprimer(): void {
     window.print();
   }

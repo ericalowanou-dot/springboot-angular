@@ -86,7 +86,7 @@
 
         <ul class="plats">
           @for (lg of l.commande?.lignes ?? []; track lg.idLigne) {
-            <li><span class="qte">{{ lg.quantite }}×</span> {{ lg.plat.nom }}</li>
+            <li><span class="qte">{{ lg.quantite }}×</span> {{ lg.menu ? '🍱 ' : '' }}{{ lg.libelle }}</li>
           }
         </ul>
 

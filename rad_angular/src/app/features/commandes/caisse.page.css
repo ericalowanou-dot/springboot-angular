@@ -88,6 +88,23 @@
   flex: 1;
 }
 
+.menu.indispo {
+  opacity: 0.5;
+}
+
+.menu .qte-menu {
+  flex: 0;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 800;
+}
+
 .menu strong,
 .menu small {
   display: block;

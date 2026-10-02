@@ -55,6 +55,7 @@ public class MenuServiceImpl implements MenuService {
     @Override
     public void delete(Long id) {
         menuRepository.delete(findById(id));
+        menuRepository.flush(); // une formule déjà commandée ne peut pas être supprimée (clé étrangère)
     }
 
     /** Le frontend n'envoie que les identifiants des plats : on recharge les entités. */

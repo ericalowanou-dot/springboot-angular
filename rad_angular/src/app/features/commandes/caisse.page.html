@@ -37,13 +37,17 @@
       @if (menus().length && categorie() === null && !recherche()) {
         <div class="menus">
           @for (m of menus(); track m.idMenu) {
-            <button class="menu" (click)="ajouterMenu(m)">
+            <button class="menu" [class.indispo]="m.commandable === false" (click)="ajouterMenu(m)">
               <app-icon name="book" [size]="18" />
               <span>
                 <strong>{{ m.nom }}</strong>
-                <small>{{ m.plats.length }} plats</small>
+                <small>{{ m.plats.length }} plats · {{ m.prix | fcfa }}</small>
               </span>
-              <app-icon name="plus" [size]="16" />
+              @if (quantiteMenu(m); as q) {
+                <span class="qte-menu">{{ q }}</span>
+              } @else {
+                <app-icon name="plus" [size]="16" />
+              }
             </button>
           }
         </div>
@@ -124,18 +128,21 @@
     </div>
 
     <div class="lignes">
-      @for (l of panier(); track l.plat.idPlat) {
+      @for (l of panier(); track l.cle) {
         <div class="ligne">
           <div class="ligne-info">
-            <span class="strong">{{ l.plat.nom }}</span>
-            <span class="small muted">{{ l.plat.prix | fcfa }}</span>
+            <span class="strong">{{ l.menuId ? '🍱 ' : '' }}{{ l.nom }}</span>
+            @if (l.detail) {
+              <span class="small muted">{{ l.detail }}</span>
+            }
+            <span class="small muted">{{ l.prix | fcfa }}</span>
           </div>
           <div class="stepper">
             <button (click)="changerQuantite(l, -1)" aria-label="Retirer un"><app-icon name="minus" [size]="14" /></button>
             <span>{{ l.quantite }}</span>
             <button (click)="changerQuantite(l, 1)" aria-label="Ajouter un"><app-icon name="plus" [size]="14" /></button>
           </div>
-          <span class="ligne-total">{{ l.plat.prix * l.quantite | fcfa }}</span>
+          <span class="ligne-total">{{ l.prix * l.quantite | fcfa }}</span>
         </div>
       } @empty {
         <div class="vide">

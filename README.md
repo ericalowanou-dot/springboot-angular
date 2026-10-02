@@ -62,7 +62,7 @@ La carte (`GET /api/plats`, `/api/categories`, `/api/menus`) et les images sont 
 
 ### Commande en ligne (client sans compte)
 
-Sur la carte publique (`/carte`), le client ajoute des plats à son panier, choisit **À emporter** ou **Livraison**,
+Sur la carte publique (`/carte`), le client ajoute des plats et des formules (au prix de la formule) à son panier, choisit **À emporter** ou **Livraison**,
 indique son nom et son téléphone, puis reçoit un **code de suivi** (page `/suivi/CODE`, actualisée en direct).
 La commande arrive dans l'écran Commandes de l'équipe avec le badge « En ligne ». Le prix est recalculé par le
 serveur, la fiche client est retrouvée par le numéro de téléphone, et chaque adresse IP est limitée à

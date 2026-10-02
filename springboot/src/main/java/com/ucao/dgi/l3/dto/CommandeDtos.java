@@ -14,8 +14,10 @@ public final class CommandeDtos {
     private CommandeDtos() {
     }
 
+    /** Une ligne porte soit un plat (platId), soit une formule (menuId). */
     public record LigneRequest(
-            @NotNull(message = "Le plat est obligatoire") Integer platId,
+            Integer platId,
+            Long menuId,
             @NotNull @Min(value = 1, message = "La quantité doit être au moins 1") Integer quantite) {
     }
 
