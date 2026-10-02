@@ -55,8 +55,14 @@ Puis ouvrir http://localhost:4200.
 | Suppressions | | | ✅ | ✅ |
 | Gestion des comptes utilisateurs | | | | ✅ |
 
-Cycle d'une livraison : **À assigner → Assignée** (livreur choisi) **→ En route** (« Je pars ») **→ Livrée** ou
-**Échouée** (avec motif). Après un échec, l'équipe peut réassigner la course.
+Cycle d'une livraison : **À assigner → Assignée → En route** (« Je pars ») **→ Livrée** ou **Échouée** (avec motif).
+
+- Dès qu'une commande en livraison est **Prête**, elle apparaît dans l'onglet « Disponibles » de **tous les livreurs** :
+  le premier qui appuie sur « Je la prends » l'obtient (attribution atomique côté base), elle disparaît chez les autres.
+- Tant qu'il n'est pas parti, le livreur peut la **libérer** : elle redevient disponible.
+- L'équipe (admin, gérant, employé) peut à tout moment **assigner ou changer** le livreur.
+- Le client peut partager la **position GPS de son téléphone** (gratuit, avec son accord) : le livreur obtient un
+  itinéraire Google Maps jusqu'au point exact.
 
 La carte (`GET /api/plats`, `/api/categories`, `/api/menus`) et les images sont publiques.
 

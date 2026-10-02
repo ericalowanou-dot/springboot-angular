@@ -18,8 +18,8 @@
 <main class="contenu">
   <div class="compteurs">
     <div class="compteur violet">
-      <strong>{{ aRecuperer() }}</strong>
-      <span>à récupérer</span>
+      <strong>{{ disponibles().length }}</strong>
+      <span>disponibles</span>
     </div>
     <div class="compteur info">
       <strong>{{ enRoute() }}</strong>
@@ -32,11 +32,15 @@
   </div>
 
   <div class="segmented onglets">
+    <button [class.active]="onglet() === 'disponibles'" (click)="onglet.set('disponibles')">
+      Disponibles
+      <span class="count" [class.alerte]="disponibles().length">{{ disponibles().length }}</span>
+    </button>
     <button [class.active]="onglet() === 'actives'" (click)="onglet.set('actives')">
-      À faire <span class="count">{{ actives().length }}</span>
+      Mes courses <span class="count">{{ actives().length }}</span>
     </button>
     <button [class.active]="onglet() === 'terminees'" (click)="onglet.set('terminees')">
-      Terminées aujourd'hui <span class="count">{{ terminees().length }}</span>
+      Terminées <span class="count">{{ terminees().length }}</span>
     </button>
   </div>
 
@@ -46,13 +50,17 @@
     }
   } @else {
     @for (l of affichees(); track l.idLivraison) {
-      <article class="course card" [class.route]="l.statut === 'EN_COURS'">
+      <article class="course card" [class.route]="l.statut === 'EN_COURS'" [class.libre]="onglet() === 'disponibles'">
         <div class="row between">
           <div>
             <h2>Commande #{{ l.commande?.idCommande }}</h2>
             <span class="small muted">{{ (l.commande?.creeLe ?? l.commande?.dateCommande) | date: 'HH:mm' }}</span>
           </div>
-          <span class="badge {{ statuts[l.statut ?? '']?.ton }}">{{ l.statut === 'EN_COURS' ? 'En route' : (l.statut | libelle: 'statut') }}</span>
+          @if (onglet() === 'disponibles') {
+            <span class="badge violet">Prête à partir</span>
+          } @else {
+            <span class="badge {{ statuts[l.statut ?? '']?.ton }}">{{ l.statut === 'EN_COURS' ? 'En route' : (l.statut | libelle: 'statut') }}</span>
+          }
         </div>
 
         @if (l.statut !== 'ECHOUEE') {
@@ -68,9 +76,14 @@
           </div>
         }
 
-        <a class="ligne-action" [href]="lienCarte(l.adresseDestination)" target="_blank" rel="noopener">
+        <a class="ligne-action" [href]="lienItineraire(l)" target="_blank" rel="noopener">
           <app-icon name="pin" [size]="18" />
-          <span class="grow">{{ l.adresseDestination }}</span>
+          <span class="grow">
+            {{ l.adresseDestination }}
+            @if (l.latitude != null) {
+              <small class="gps">📍 Position GPS exacte{{ l.precisionMetres ? ' (± ' + l.precisionMetres + ' m)' : '' }}</small>
+            }
+          </span>
           <span class="petit-lien">Itinéraire <app-icon name="external" [size]="14" /></span>
         </a>
 
@@ -94,46 +107,70 @@
           <div class="notes"><app-icon name="info" [size]="16" /> {{ l.commande?.notes }}</div>
         }
 
-        @switch (l.statut) {
-          @case ('ASSIGNEE') {
-            <button class="btn btn-primary btn-lg btn-block" [disabled]="enCours() === l.idLivraison" (click)="depart(l)">
-              @if (enCours() === l.idLivraison) {
-                <span class="spinner"></span>
-              } @else {
-                🛵
-              }
-              Je pars
-            </button>
-          }
-          @case ('EN_COURS') {
-            <p class="small muted depart">Parti à {{ l.heureDepart | date: 'HH:mm' }}</p>
-            <div class="boutons">
-              <button class="btn btn-success btn-lg" [disabled]="enCours() === l.idLivraison" (click)="livree(l)">
-                <app-icon name="check" [size]="18" /> Livrée
+        @if (onglet() === 'disponibles') {
+          <button class="btn btn-primary btn-lg btn-block" [disabled]="enCours() === l.idLivraison" (click)="prendre(l)">
+            @if (enCours() === l.idLivraison) {
+              <span class="spinner"></span>
+            } @else {
+              ✋
+            }
+            Je la prends
+          </button>
+        } @else {
+          @switch (l.statut) {
+            @case ('ASSIGNEE') {
+              <button class="btn btn-primary btn-lg btn-block" [disabled]="enCours() === l.idLivraison" (click)="depart(l)">
+                @if (enCours() === l.idLivraison) {
+                  <span class="spinner"></span>
+                } @else {
+                  🛵
+                }
+                Je pars
               </button>
-              <button class="btn btn-danger btn-lg" [disabled]="enCours() === l.idLivraison" (click)="ouvrirEchec(l)">
-                <app-icon name="x" [size]="18" /> Échec
+              <button class="btn btn-ghost btn-sm liberer" [disabled]="enCours() === l.idLivraison" (click)="liberer(l)">
+                Je ne peux pas la faire : la libérer
               </button>
-            </div>
-          }
-          @default {
-            <div class="bilan" [class.ok]="l.statut === 'LIVREE'">
-              @if (l.statut === 'LIVREE') {
-                <app-icon name="check" [size]="16" /> Livrée @if (l.heureFin) { à {{ l.heureFin | date: 'HH:mm' }} }
-              } @else {
-                <app-icon name="alert" [size]="16" /> Échec @if (l.heureFin) { à {{ l.heureFin | date: 'HH:mm' }} } · {{ l.motifEchec || 'motif non précisé' }}
-              }
-            </div>
+            }
+            @case ('EN_COURS') {
+              <p class="small muted depart">Parti à {{ l.heureDepart | date: 'HH:mm' }}</p>
+              <div class="boutons">
+                <button class="btn btn-success btn-lg" [disabled]="enCours() === l.idLivraison" (click)="livree(l)">
+                  <app-icon name="check" [size]="18" /> Livrée
+                </button>
+                <button class="btn btn-danger btn-lg" [disabled]="enCours() === l.idLivraison" (click)="ouvrirEchec(l)">
+                  <app-icon name="x" [size]="18" /> Échec
+                </button>
+              </div>
+            }
+            @default {
+              <div class="bilan" [class.ok]="l.statut === 'LIVREE'">
+                @if (l.statut === 'LIVREE') {
+                  <app-icon name="check" [size]="16" /> Livrée @if (l.heureFin) { à {{ l.heureFin | date: 'HH:mm' }} }
+                } @else {
+                  <app-icon name="alert" [size]="16" /> Échec @if (l.heureFin) { à {{ l.heureFin | date: 'HH:mm' }} } · {{ l.motifEchec || 'motif non précisé' }}
+                }
+              </div>
+            }
           }
         }
       </article>
     } @empty {
       <div class="empty card">
         <span class="empty-icon"><app-icon name="truck" [size]="26" /></span>
-        <h3>{{ onglet() === 'actives' ? 'Aucune course pour le moment' : 'Rien de terminé aujourd’hui' }}</h3>
-        <p>
-          {{ onglet() === 'actives' ? 'Les livraisons qui vous sont assignées apparaîtront ici automatiquement.' : 'Vos livraisons du jour s’afficheront ici.' }}
-        </p>
+        @switch (onglet()) {
+          @case ('disponibles') {
+            <h3>Aucune course disponible</h3>
+            <p>Les commandes prêtes à livrer apparaîtront ici. Vous serez prévenu automatiquement.</p>
+          }
+          @case ('actives') {
+            <h3>Aucune course en cours</h3>
+            <p>Prenez une course dans l'onglet « Disponibles », ou attendez qu'on vous en assigne une.</p>
+          }
+          @default {
+            <h3>Rien de terminé aujourd'hui</h3>
+            <p>Vos livraisons du jour s'afficheront ici.</p>
+          }
+        }
       </div>
     }
   }

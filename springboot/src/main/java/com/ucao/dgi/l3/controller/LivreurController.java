@@ -24,6 +24,21 @@ public class LivreurController {
         return livraisonService.mesLivraisons(livreur);
     }
 
+    @GetMapping("/disponibles")
+    public List<Livraison> disponibles() {
+        return livraisonService.disponibles();
+    }
+
+    @PostMapping("/{id}/prendre")
+    public Livraison prendre(@AuthenticationPrincipal User livreur, @PathVariable Integer id) {
+        return livraisonService.prendre(livreur, id);
+    }
+
+    @PostMapping("/{id}/liberer")
+    public Livraison liberer(@AuthenticationPrincipal User livreur, @PathVariable Integer id) {
+        return livraisonService.liberer(livreur, id);
+    }
+
     @PostMapping("/{id}/depart")
     public Livraison depart(@AuthenticationPrincipal User livreur, @PathVariable Integer id) {
         return livraisonService.depart(livreur, id);

@@ -129,6 +129,9 @@
           <div class="info">
             <span class="label">Livraison</span>
             <span class="strong">{{ c.livraison.adresseDestination }}</span>
+            @if (c.livraison.latitude != null) {
+              <a class="small lien-tel" [href]="lienItineraire(c.livraison)" target="_blank" rel="noopener">📍 Voir la position GPS</a>
+            }
             <span class="small muted">
               {{ c.livraison.statut | libelle: 'statut' }}{{ c.livraison.livreur ? ' · ' + c.livraison.livreur.prenom + ' ' + c.livraison.livreur.nom : '' }}
             </span>

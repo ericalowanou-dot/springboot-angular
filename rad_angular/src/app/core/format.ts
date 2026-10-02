@@ -54,6 +54,21 @@ export function emojiCategorie(nom?: string | null): string {
   return '🍽️';
 }
 
+/**
+ * Lien Google Maps vers le lieu de livraison : itinéraire jusqu'au point GPS exact s'il est connu,
+ * sinon recherche de l'adresse saisie. Simple lien, aucune clé ni frais.
+ */
+export function lienItineraire(l: {
+  latitude?: number | null;
+  longitude?: number | null;
+  adresseDestination?: string | null;
+}): string {
+  if (l.latitude != null && l.longitude != null) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${l.latitude},${l.longitude}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.adresseDestination ?? '')}`;
+}
+
 /** Nom à afficher pour une commande : fiche client, sinon coordonnées saisies en ligne. */
 export function nomClient(c: {
   client?: { prenom: string; nom: string } | null;

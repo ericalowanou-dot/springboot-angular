@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Livraison implements Serializable {
 
+    public static final String ADRESSE_GPS = "Position GPS du client";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idLivraison;
@@ -26,6 +28,14 @@ public class Livraison implements Serializable {
     private LocalDate dateLivraison;
 
     private String adresseDestination;
+
+    /** Position GPS envoyée par le téléphone du client (facultative). */
+    private Double latitude;
+
+    private Double longitude;
+
+    /** Précision annoncée par le téléphone, en mètres. */
+    private Integer precisionMetres;
 
     /** Moment où le livreur a indiqué « Je pars ». */
     private LocalDateTime heureDepart;

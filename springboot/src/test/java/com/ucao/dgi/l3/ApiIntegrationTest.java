@@ -259,6 +259,73 @@ class ApiIntegrationTest {
         assertThat(suivi.get("lignes").get(0).get("formule").asBoolean()).isTrue();
     }
 
+    @Test
+    void positionGpsEtCoursesPrisesParLesLivreurs() throws Exception {
+        int plat = creerPlat("Brochettes", 2500);
+        int idA = appel(post("/api/personnel"), "{\"nom\":\"A\",\"prenom\":\"Kodjo\",\"fonction\":\"LIVREUR\"}", 201)
+                .get("idPersonnel").asInt();
+        int idB = appel(post("/api/personnel"), "{\"nom\":\"B\",\"prenom\":\"Sena\",\"fonction\":\"LIVREUR\"}", 201)
+                .get("idPersonnel").asInt();
+        appel(post("/api/personnel/" + idA + "/acces"), "{\"email\":\"a@test.com\",\"password\":\"secret1\"}", 201);
+        appel(post("/api/personnel/" + idB + "/acces"), "{\"email\":\"b@test.com\",\"password\":\"secret1\"}", 201);
+        String tokenAdmin = token;
+
+        // commande en ligne avec seulement la position du téléphone
+        token = null;
+        appel(post("/api/public/commandes"),
+                "{\"type\":\"LIVRAISON\",\"nom\":\"Yawa\",\"telephone\":\"70556677\",\"position\":{\"latitude\":95,\"longitude\":1.2},\"lignes\":[{\"platId\":%d,\"quantite\":1}]}"
+                        .formatted(plat), 400);
+        int numero = appel(post("/api/public/commandes"),
+                "{\"type\":\"LIVRAISON\",\"nom\":\"Yawa\",\"telephone\":\"70556677\",\"position\":{\"latitude\":6.1319,\"longitude\":1.2228,\"precision\":12},\"lignes\":[{\"platId\":%d,\"quantite\":1}]}"
+                        .formatted(plat), 201).get("numero").asInt();
+
+        token = tokenAdmin;
+        JsonNode cmd = appel(get("/api/commandes/" + numero), null, 200);
+        JsonNode liv = cmd.get("livraison");
+        assertThat(liv.get("latitude").asDouble()).isEqualTo(6.1319);
+        assertThat(liv.get("precisionMetres").asInt()).isEqualTo(12);
+        assertThat(liv.get("adresseDestination").asText()).isEqualTo("Position GPS du client");
+        int livraison = liv.get("idLivraison").asInt();
+
+        // pas encore prête : invisible pour les livreurs
+        String jetonA = jeton("a@test.com", "secret1");
+        String jetonB = jeton("b@test.com", "secret1");
+        token = jetonA;
+        assertThat(appel(get("/api/livreur/livraisons/disponibles"), null, 200)).isEmpty();
+        appel(post("/api/livreur/livraisons/" + livraison + "/prendre"), "", 409);
+
+        token = tokenAdmin;
+        appel(patch("/api/commandes/" + numero + "/statut"), "{\"statut\":\"EN_PREPARATION\"}", 200);
+        appel(patch("/api/commandes/" + numero + "/statut"), "{\"statut\":\"PRETE\"}", 200);
+
+        // prête : visible par tous ; le premier qui la prend l'obtient
+        token = jetonB;
+        assertThat(appel(get("/api/livreur/livraisons/disponibles"), null, 200)).hasSize(1);
+        token = jetonA;
+        assertThat(appel(post("/api/livreur/livraisons/" + livraison + "/prendre"), "", 200)
+                .get("statut").asText()).isEqualTo("ASSIGNEE");
+        token = jetonB;
+        appel(post("/api/livreur/livraisons/" + livraison + "/prendre"), "", 409);
+        assertThat(appel(get("/api/livreur/livraisons/disponibles"), null, 200)).isEmpty();
+        appel(post("/api/livreur/livraisons/" + livraison + "/liberer"), "", 403); // pas la sienne
+
+        // A la libère : elle redevient disponible, B la prend
+        token = jetonA;
+        appel(post("/api/livreur/livraisons/" + livraison + "/liberer"), "", 200);
+        token = jetonB;
+        assertThat(appel(get("/api/livreur/livraisons/disponibles"), null, 200)).hasSize(1);
+        appel(post("/api/livreur/livraisons/" + livraison + "/prendre"), "", 200);
+
+        // l'équipe peut toujours réassigner : la course passe de B à A
+        token = tokenAdmin;
+        appel(patch("/api/livraisons/" + livraison), "{\"livreurId\":%d}".formatted(idA), 200);
+        token = jetonB;
+        assertThat(appel(get("/api/livreur/livraisons"), null, 200)).isEmpty();
+        token = jetonA;
+        appel(post("/api/livreur/livraisons/" + livraison + "/depart"), "", 200);
+        appel(post("/api/livreur/livraisons/" + livraison + "/liberer"), "", 409); // déjà partie
+    }
+
     private String jeton(String email, String motDePasse) throws Exception {
         String reponse = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, motDePasse)))

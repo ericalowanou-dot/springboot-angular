@@ -27,7 +27,15 @@ public final class CommandeDtos {
             Integer numeroTable,
             @Size(max = 255) String notes,
             @Size(max = 255) String adresseLivraison,
+            @Valid PositionGps position,
             @NotEmpty(message = "La commande doit contenir au moins un plat") List<@Valid LigneRequest> lignes) {
+    }
+
+    /** Position fournie par la géolocalisation du téléphone du client. */
+    public record PositionGps(
+            @NotNull @DecimalMin("-90") @DecimalMax("90") Double latitude,
+            @NotNull @DecimalMin("-180") @DecimalMax("180") Double longitude,
+            @PositiveOrZero Integer precision) {
     }
 
     public record StatutRequest(@NotNull(message = "Le statut est obligatoire") StatutCommande statut) {

@@ -91,6 +91,38 @@ public class LivraisonServiceImpl implements LivraisonService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Livraison> disponibles() {
+        return livraisonRepository.findDisponibles(StatutLivraison.A_ASSIGNER, StatutCommande.PRETE);
+    }
+
+    @Override
+    public Livraison prendre(User livreur, Integer id) {
+        Livraison livraison = findById(id);
+        verifierCommandeActive(livraison);
+        if (livraison.getCommande() == null || livraison.getCommande().getStatut() != StatutCommande.PRETE) {
+            throw new RegleMetierException("Cette commande n'est pas encore prête");
+        }
+        int modifiees = livraisonRepository.prendre(id, personnel(livreur),
+                StatutLivraison.ASSIGNEE, StatutLivraison.A_ASSIGNER);
+        if (modifiees == 0) {
+            throw new RegleMetierException("Trop tard : cette course a déjà été prise par un autre livreur");
+        }
+        return findById(id);
+    }
+
+    @Override
+    public Livraison liberer(User livreur, Integer id) {
+        Livraison livraison = sienne(livreur, id);
+        if (livraison.getStatut() != StatutLivraison.ASSIGNEE) {
+            throw new RegleMetierException("Une course déjà commencée ne peut plus être libérée");
+        }
+        livraison.setLivreur(null);
+        livraison.setStatut(StatutLivraison.A_ASSIGNER);
+        return livraison;
+    }
+
+    @Override
     public Livraison depart(User livreur, Integer id) {
         Livraison livraison = sienne(livreur, id);
         if (livraison.getStatut() != StatutLivraison.ASSIGNEE) {

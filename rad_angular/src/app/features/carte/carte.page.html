@@ -198,9 +198,33 @@
           </div>
         </div>
         @if (coord.type === 'LIVRAISON') {
+          <div class="localisation">
+            @if (position(); as p) {
+              <div class="position-ok">
+                <app-icon name="pin" [size]="20" />
+                <div class="grow">
+                  <strong>Position enregistrée</strong>
+                  <small>Précision ± {{ p.precision }} m · <a [href]="lienPosition()" target="_blank" rel="noopener">vérifier sur la carte</a></small>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="oublierPosition()">Retirer</button>
+              </div>
+            } @else {
+              <button type="button" class="btn btn-secondary btn-block" [disabled]="localisation() === 'recherche'" (click)="localiser()">
+                @if (localisation() === 'recherche') {
+                  <span class="spinner"></span> Localisation en cours…
+                } @else {
+                  📍 Utiliser ma position actuelle
+                }
+              </button>
+              <small class="muted">Le livreur vous trouvera plus facilement. Votre position ne sert qu'à cette livraison.</small>
+              @if (localisation() === 'erreur') {
+                <small class="erreur-loc">{{ erreurLocalisation() }}</small>
+              }
+            }
+          </div>
           <div class="field">
-            <label for="c-adr">Adresse de livraison</label>
-            <input id="c-adr" class="input" name="adresse" maxlength="255" autocomplete="street-address" placeholder="Quartier, rue, point de repère…" [(ngModel)]="coord.adresse" />
+            <label for="c-adr">{{ position() ? 'Repère pour le livreur (facultatif)' : 'Adresse de livraison' }}</label>
+            <input id="c-adr" class="input" name="adresse" maxlength="255" autocomplete="street-address" [placeholder]="position() ? 'Portail bleu, 2e étage…' : 'Quartier, rue, point de repère…'" [(ngModel)]="coord.adresse" />
           </div>
         }
         <div class="field">

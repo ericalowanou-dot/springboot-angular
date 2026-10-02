@@ -94,6 +94,9 @@ export class ApiService {
   /** Espace du livreur connecté. */
   readonly livreur = {
     mesLivraisons: () => this.http.get<Livraison[]>(`${this.base}/livreur/livraisons`),
+    disponibles: () => this.http.get<Livraison[]>(`${this.base}/livreur/livraisons/disponibles`),
+    prendre: (id: number) => this.http.post<Livraison>(`${this.base}/livreur/livraisons/${id}/prendre`, null),
+    liberer: (id: number) => this.http.post<Livraison>(`${this.base}/livreur/livraisons/${id}/liberer`, null),
     depart: (id: number) => this.http.post<Livraison>(`${this.base}/livreur/livraisons/${id}/depart`, null),
     livree: (id: number) => this.http.post<Livraison>(`${this.base}/livreur/livraisons/${id}/livree`, null),
     echec: (id: number, motif: string, commentaire: string | null) =>

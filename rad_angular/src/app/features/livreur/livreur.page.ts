@@ -1,19 +1,27 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Observable, forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ConfirmService } from '../../core/confirm.service';
-import { FcfaPipe, LibellePipe, STATUTS, fcfa, nomClient } from '../../core/format';
+import { FcfaPipe, LibellePipe, STATUTS, fcfa, lienItineraire, nomClient } from '../../core/format';
 import { Livraison } from '../../core/models';
 import { ThemeService } from '../../core/theme.service';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../ui/icon.component';
 import { ModalComponent } from '../../ui/modal.component';
 
-const ACTUALISATION_MS = 30_000;
+const ACTUALISATION_MS = 20_000;
 
-/** Espace mobile du livreur : ses courses, « Je pars », puis « Livrée » ou « Échec ». */
+type Onglet = 'disponibles' | 'actives' | 'terminees';
+
+/**
+ * Espace mobile du livreur :
+ * - « Disponibles » : courses prêtes que personne n'a prises (visibles par tous les livreurs) ;
+ * - « Mes courses » : « Je pars », puis « Livrée » ou « Échec » ;
+ * - « Terminées » : bilan du jour.
+ */
 @Component({
   selector: 'app-livreur',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +38,7 @@ export class LivreurPage {
 
   protected statuts = STATUTS;
   protected nomClient = nomClient;
+  protected lienItineraire = lienItineraire;
   protected motifs = [
     'Client absent',
     'Client injoignable',
@@ -40,7 +49,8 @@ export class LivreurPage {
   ];
 
   protected livraisons = signal<Livraison[] | null>(null);
-  protected onglet = signal<'actives' | 'terminees'>('actives');
+  protected disponibles = signal<Livraison[]>([]);
+  protected onglet = signal<Onglet>('actives');
   protected enCours = signal<number | null>(null);
   protected echec = signal<{ livraison: Livraison; motif: string; commentaire: string } | null>(null);
 
@@ -50,33 +60,94 @@ export class LivreurPage {
   protected terminees = computed(() =>
     (this.livraisons() ?? []).filter((l) => l.statut === 'LIVREE' || l.statut === 'ECHOUEE'),
   );
-  protected aRecuperer = computed(() => this.actives().filter((l) => l.statut === 'ASSIGNEE').length);
   protected enRoute = computed(() => this.actives().filter((l) => l.statut === 'EN_COURS').length);
   protected livrees = computed(() => this.terminees().filter((l) => l.statut === 'LIVREE').length);
-  protected affichees = computed(() => (this.onglet() === 'actives' ? this.actives() : this.terminees()));
+  protected affichees = computed(() => {
+    switch (this.onglet()) {
+      case 'disponibles':
+        return this.disponibles();
+      case 'terminees':
+        return this.terminees();
+      default:
+        return this.actives();
+    }
+  });
+
+  private premierChargement = true;
 
   constructor() {
     this.charger();
-    // les nouvelles assignations apparaissent sans recharger la page
+    // nouvelles courses et assignations sans recharger la page
     const minuteur = setInterval(() => this.charger(true), ACTUALISATION_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(minuteur));
   }
 
   charger(silencieux = false): void {
-    this.api.livreur.mesLivraisons().subscribe({
-      next: (l) => this.livraisons.set(l),
+    const connues = new Set(this.disponibles().map((l) => l.idLivraison));
+    forkJoin({ miennes: this.api.livreur.mesLivraisons(), libres: this.api.livreur.disponibles() }).subscribe({
+      next: ({ miennes, libres }) => {
+        const nouvelles = libres.filter((l) => !connues.has(l.idLivraison));
+        this.livraisons.set(miennes);
+        this.disponibles.set(libres);
+        if (this.premierChargement) {
+          this.premierChargement = false;
+          if (!miennes.some((l) => l.statut === 'ASSIGNEE' || l.statut === 'EN_COURS') && libres.length) {
+            this.onglet.set('disponibles');
+          }
+        } else if (nouvelles.length) {
+          this.toasts.info(`🛵 ${nouvelles.length} nouvelle(s) course(s) disponible(s)`);
+          navigator.vibrate?.(200);
+        }
+      },
       error: (e) => {
         if (!silencieux) this.toasts.erreur(e);
       },
     });
   }
 
-  lienCarte(adresse: string): string {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresse)}`;
-  }
-
   lienTel(tel: string): string {
     return `tel:${tel.replace(/[^\d+]/g, '')}`;
+  }
+
+  prendre(l: Livraison): void {
+    this.enCours.set(l.idLivraison);
+    this.api.livreur.prendre(l.idLivraison).subscribe({
+      next: (maj) => {
+        this.disponibles.update((liste) => liste.filter((x) => x.idLivraison !== maj.idLivraison));
+        this.livraisons.update((liste) => [maj, ...(liste ?? [])]);
+        this.enCours.set(null);
+        this.onglet.set('actives');
+        this.toasts.succes(`Course #${maj.commande?.idCommande} pour vous : récupérez-la au restaurant`);
+      },
+      error: (err) => {
+        this.enCours.set(null);
+        this.toasts.erreur(err);
+        this.charger(true); // elle a sans doute été prise par un autre livreur
+      },
+    });
+  }
+
+  async liberer(l: Livraison): Promise<void> {
+    const ok = await this.confirm.demander({
+      titre: 'Libérer cette course ?',
+      message: 'Elle redeviendra disponible pour les autres livreurs.',
+      libelle: 'Oui, la libérer',
+      danger: true,
+    });
+    if (!ok) return;
+    this.enCours.set(l.idLivraison);
+    this.api.livreur.liberer(l.idLivraison).subscribe({
+      next: () => {
+        this.enCours.set(null);
+        this.toasts.succes('Course libérée');
+        this.charger(true);
+      },
+      error: (err) => {
+        this.enCours.set(null);
+        this.toasts.erreur(err);
+        this.charger(true);
+      },
+    });
   }
 
   depart(l: Livraison): void {
@@ -118,7 +189,7 @@ export class LivreurPage {
     this.echec.set(null);
   }
 
-  private executer(l: Livraison, appel: ReturnType<ApiService['livreur']['depart']>, message: string): void {
+  private executer(l: Livraison, appel: Observable<Livraison>, message: string): void {
     this.enCours.set(l.idLivraison);
     appel.subscribe({
       next: (maj) => {

@@ -106,6 +106,9 @@ export interface Livraison {
   idLivraison: number;
   dateLivraison?: string | null;
   adresseDestination: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  precisionMetres?: number | null;
   heureDepart?: string | null;
   heureFin?: string | null;
   motifEchec?: string | null;
@@ -134,11 +137,19 @@ export interface Commande {
   telephoneContact?: string | null;
 }
 
+/** Position transmise par la géolocalisation du téléphone du client. */
+export interface PositionGps {
+  latitude: number;
+  longitude: number;
+  precision?: number | null;
+}
+
 export interface CommandeEnLigneRequest {
   type: 'A_EMPORTER' | 'LIVRAISON';
   nom: string;
   telephone: string;
   adresse?: string | null;
+  position?: PositionGps | null;
   notes?: string | null;
   lignes: LigneRequete[];
 }

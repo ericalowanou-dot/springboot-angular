@@ -2,6 +2,7 @@ package com.ucao.dgi.l3.service.impl;
 
 import com.ucao.dgi.l3.dto.CommandeDtos.CommandeRequest;
 import com.ucao.dgi.l3.dto.CommandeDtos.LigneRequest;
+import com.ucao.dgi.l3.dto.CommandeDtos.PositionGps;
 import com.ucao.dgi.l3.entity.*;
 import com.ucao.dgi.l3.exception.RegleMetierException;
 import com.ucao.dgi.l3.exception.RessourceIntrouvableException;
@@ -173,11 +174,14 @@ public class CommandeServiceImpl implements CommandeService {
         commande.recalculerTotal();
 
         if (type == TypeCommande.LIVRAISON) {
+            PositionGps gps = requete.position();
+            // priorité : adresse saisie, puis position GPS, puis adresse de la fiche client
             String adresse = requete.adresseLivraison() != null && !requete.adresseLivraison().isBlank()
                     ? requete.adresseLivraison().trim()
+                    : gps != null ? Livraison.ADRESSE_GPS
                     : client != null ? client.getAddress() : null;
             if (adresse == null || adresse.isBlank()) {
-                throw new RegleMetierException("Une adresse de livraison est obligatoire");
+                throw new RegleMetierException("Une adresse ou une position de livraison est obligatoire");
             }
             Livraison livraison = commande.getLivraison();
             if (livraison == null) {
@@ -187,6 +191,9 @@ public class CommandeServiceImpl implements CommandeService {
                 commande.setLivraison(livraison);
             }
             livraison.setAdresseDestination(adresse);
+            livraison.setLatitude(gps == null ? null : gps.latitude());
+            livraison.setLongitude(gps == null ? null : gps.longitude());
+            livraison.setPrecisionMetres(gps == null ? null : gps.precision());
         } else if (commande.getLivraison() != null) {
             Livraison obsolete = commande.getLivraison();
             commande.setLivraison(null);

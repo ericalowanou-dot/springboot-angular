@@ -20,6 +20,7 @@ public final class EnLigneDtos {
             @NotBlank(message = "Votre téléphone est obligatoire")
             @Pattern(regexp = "^\\+?[0-9 .\\-]{8,20}$", message = "Numéro de téléphone invalide") String telephone,
             @Size(max = 255) String adresse,
+            @Valid com.ucao.dgi.l3.dto.CommandeDtos.PositionGps position,
             @Size(max = 255) String notes,
             @NotEmpty(message = "Votre panier est vide") @Size(max = 30, message = "Trop d'articles différents")
             List<@Valid LigneRequest> lignes) {

@@ -46,7 +46,8 @@ public class CommandeEnLigneService {
 
         // même logique (prix, disponibilité, livraison) que pour une commande saisie en caisse
         Commande commande = commandeService.creer(new CommandeRequest(
-                client == null ? null : client.getIdClient(), r.type(), null, r.notes(), adresse, r.lignes()));
+                client == null ? null : client.getIdClient(), r.type(), null, r.notes(), adresse,
+                r.type() == TypeCommande.LIVRAISON ? r.position() : null, r.lignes()));
         commande.setEnLigne(true);
         commande.setNomContact(r.nom().trim());
         commande.setTelephoneContact(telephone);

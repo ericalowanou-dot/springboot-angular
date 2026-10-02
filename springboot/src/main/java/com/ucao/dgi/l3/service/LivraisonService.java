@@ -17,6 +17,15 @@ public interface LivraisonService {
     /** Livraisons du livreur connecté : en attente, en route, et celles terminées aujourd'hui. */
     List<Livraison> mesLivraisons(User livreur);
 
+    /** Courses prêtes, encore libres, que n'importe quel livreur peut prendre. */
+    List<Livraison> disponibles();
+
+    /** Le livreur prend une course libre ; échoue si un autre l'a prise avant lui. */
+    Livraison prendre(User livreur, Integer id);
+
+    /** Le livreur rend une course qu'il a prise mais pas encore commencée. */
+    Livraison liberer(User livreur, Integer id);
+
     /** « Je pars » : le livreur a récupéré la commande. */
     Livraison depart(User livreur, Integer id);
 

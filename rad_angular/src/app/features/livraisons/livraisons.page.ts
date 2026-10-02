@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
-import { FcfaPipe, STATUTS, nomClient } from '../../core/format';
+import { FcfaPipe, STATUTS, lienItineraire, nomClient } from '../../core/format';
 import { Livraison, Personnel, StatutLivraison } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../ui/icon.component';
@@ -20,7 +20,10 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
       <div class="page-head">
         <div>
           <h1>Livraisons</h1>
-          <p>Assignez un livreur : il suit ensuite la course depuis son téléphone (« Je pars », « Livrée » ou « Échec »).</p>
+          <p>
+            Dès qu'une commande est prête, tous les livreurs la voient et peuvent la prendre. Vous pouvez aussi assigner
+            ou changer de livreur à tout moment.
+          </p>
         </div>
         <button class="btn btn-secondary" (click)="charger()"><app-icon name="refresh" [size]="16" /> Actualiser</button>
       </div>
@@ -46,7 +49,12 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
                     <strong>Commande #{{ l.commande?.idCommande }}</strong>
                     <span class="strong">{{ l.commande?.montantTotal | fcfa }}</span>
                   </div>
-                  <div class="ligne"><app-icon name="pin" [size]="15" /> {{ l.adresseDestination }}</div>
+                  <a class="ligne lien-position" [href]="lienItineraire(l)" target="_blank" rel="noopener">
+                    <app-icon name="pin" [size]="15" /> {{ l.adresseDestination }}
+                    @if (l.latitude != null) {
+                      <span class="badge success plain">GPS</span>
+                    }
+                  </a>
                   @if (l.commande; as cmd) {
                     @if (cmd.client || cmd.nomContact) {
                       <div class="ligne">
@@ -69,7 +77,7 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
                     <div class="ligne small"><app-icon name="truck" [size]="14" /> Parti à {{ l.heureDepart | date: 'HH:mm' }}</div>
                   }
 
-                  @if (l.statut !== 'LIVREE' && l.statut !== 'EN_COURS') {
+                  @if (l.statut !== 'LIVREE') {
                     <div class="field">
                       <select
                         class="select"
@@ -157,6 +165,9 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
     .grow {
       flex: 1;
     }
+    .lien-position:hover {
+      color: var(--primary-text);
+    }
     .motif {
       display: flex;
       align-items: flex-start;
@@ -181,6 +192,7 @@ export class LivraisonsPage {
 
   protected statuts = STATUTS;
   protected nomClient = nomClient;
+  protected lienItineraire = lienItineraire;
   protected colonnes: Colonne[] = [
     { statut: 'A_ASSIGNER', titre: 'À assigner', icone: 'clock' },
     { statut: 'ASSIGNEE', titre: 'Attente du livreur', icone: 'user' },

@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ConfirmService } from '../../core/confirm.service';
-import { FcfaPipe, LibellePipe, STATUTS, nomClient } from '../../core/format';
+import { FcfaPipe, LibellePipe, STATUTS, lienItineraire, nomClient } from '../../core/format';
 import { Commande, StatutCommande } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../ui/icon.component';
@@ -43,6 +43,7 @@ export class CommandesPage {
 
   protected statuts = STATUTS;
   protected nomClient = nomClient;
+  protected lienItineraire = lienItineraire;
   protected filtres = FILTRES;
   protected commandes = signal<Commande[] | null>(null);
   protected filtre = signal<Filtre>('EN_COURS');

@@ -374,6 +374,37 @@
   color: var(--primary-text);
 }
 
+.localisation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.position-ok {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.position-ok small {
+  display: block;
+  color: var(--text-2);
+}
+
+.position-ok a {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.erreur-loc {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 .recap {
   padding: 12px 14px;
   border-radius: 12px;
