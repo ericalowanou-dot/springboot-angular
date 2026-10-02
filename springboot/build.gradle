@@ -45,3 +45,8 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// Un seul jar exécutable dans build/libs (le Dockerfile copie build/libs/*.jar)
+tasks.named('jar') {
+	enabled = false
+}

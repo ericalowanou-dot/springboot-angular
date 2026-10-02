@@ -58,6 +58,7 @@ La carte (`GET /api/plats`, `/api/categories`, `/api/menus`) et les images sont 
 
 | Variable | Défaut (dev) | Rôle |
 |---|---|---|
+| `DATABASE_URL` | — | URL complète de la base (format Render `postgresql://user:mdp@hôte:5432/base`) ; prioritaire sur les `DB_*` |
 | `DB_HOST` / `DB_PORT` / `DB_NAME` | `localhost` / `5432` / `rad_db` | Base PostgreSQL |
 | `DB_USER` / `DB_PASSWORD` | `postgres` / `postgres` | Identifiants PostgreSQL |
 | `JWT_SECRET` | valeur de dev | **Obligatoire en prod**, 32 caractères minimum |
