@@ -26,7 +26,7 @@ type FormUtilisateur = UtilisateurRequest & { id?: number };
         <button class="btn btn-primary" (click)="ouvrir()"><app-icon name="plus" [size]="16" /> Nouveau compte</button>
       </div>
 
-      <div class="grid grid-3 roles">
+      <div class="grid grid-4 roles">
         @for (r of roles; track r.id) {
           <div class="card card-pad">
             <div class="row"><span class="badge {{ r.ton }} plain">{{ r.id | libelle: 'role' }}</span></div>
@@ -98,11 +98,16 @@ type FormUtilisateur = UtilisateurRequest & { id?: number };
             </div>
             <div class="field">
               <label for="role">Rôle</label>
-              <select id="role" class="select" name="role" [(ngModel)]="f.role">
-                @for (r of roles; track r.id) {
-                  <option [value]="r.id">{{ r.id | libelle: 'role' }}</option>
-                }
-              </select>
+              @if (f.role === 'LIVREUR') {
+                <input id="role" class="input" value="Livreur" disabled />
+                <span class="hint">Les accès livreur se gèrent depuis la page Personnel.</span>
+              } @else {
+                <select id="role" class="select" name="role" [(ngModel)]="f.role">
+                  @for (r of rolesAttribuables; track r.id) {
+                    <option [value]="r.id">{{ r.id | libelle: 'role' }}</option>
+                  }
+                </select>
+              }
             </div>
           </div>
           <div class="field">
@@ -138,7 +143,9 @@ export class UtilisateursPage {
     { id: 'ADMIN', ton: 'danger', description: 'Accès complet, y compris la gestion des comptes utilisateurs.' },
     { id: 'GERANT', ton: 'primary', description: 'Gère la carte, les stocks, le personnel et peut supprimer des données.' },
     { id: 'EMPLOYE', ton: 'info', description: 'Prend les commandes, encaisse, gère les clients et les livraisons.' },
+    { id: 'LIVREUR', ton: 'violet', description: 'Voit uniquement ses livraisons : « Je pars », « Livrée » ou « Échec ». Accès créé depuis la page Personnel.' },
   ];
+  protected rolesAttribuables = this.roles.filter((r) => r.id !== 'LIVREUR');
 
   protected utilisateurs = signal<Utilisateur[] | null>(null);
   protected form = signal<FormUtilisateur | null>(null);

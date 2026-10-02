@@ -1,10 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { ConfirmService } from '../../core/confirm.service';
 import { FcfaPipe, LIBELLES, LibellePipe, initiales } from '../../core/format';
-import { Personnel } from '../../core/models';
+import { Personnel, Utilisateur } from '../../core/models';
 import { ToastService } from '../../core/toast.service';
 import { IconComponent } from '../../ui/icon.component';
 import { ModalComponent } from '../../ui/modal.component';
@@ -51,6 +52,21 @@ import { ModalComponent } from '../../ui/modal.component';
               <dt>Embauché le</dt>
               <dd>{{ p.dateEmbauche ? (p.dateEmbauche | date: 'd MMM y') : '—' }}</dd>
             </dl>
+            @if (p.fonction.toUpperCase() === 'LIVREUR') {
+              <div class="acces">
+                @if (acces()[p.idPersonnel!]; as compte) {
+                  <div class="grow">
+                    <span class="small muted">Accès application</span>
+                    <div class="small strong ellipsis">{{ compte.email }}</div>
+                  </div>
+                  <span class="badge" [class.success]="compte.enabled" [class.danger]="!compte.enabled">{{ compte.enabled ? 'Actif' : 'Bloqué' }}</span>
+                  <button class="btn btn-ghost btn-sm" (click)="ouvrirAcces(p)">Gérer</button>
+                } @else {
+                  <span class="small muted grow">Pas encore d'accès à l'application</span>
+                  <button class="btn btn-secondary btn-sm" (click)="ouvrirAcces(p)"><app-icon name="key" [size]="14" /> Créer un accès</button>
+                }
+              </div>
+            }
             <div class="row pied">
               <button class="btn btn-secondary btn-sm" (click)="ouvrir(p)"><app-icon name="pencil" [size]="14" /> Modifier</button>
               <button class="icon-btn danger" title="Supprimer" (click)="supprimer(p)"><app-icon name="trash" [size]="16" /></button>
@@ -66,6 +82,39 @@ import { ModalComponent } from '../../ui/modal.component';
         }
       </div>
     </div>
+
+    @if (formAcces(); as a) {
+      <app-modal
+        [titre]="a.existant ? 'Accès de ' + a.personnel.prenom : 'Créer un accès livreur'"
+        [sousTitre]="a.personnel.prenom + ' ' + a.personnel.nom + ' pourra suivre ses livraisons depuis son téléphone.'"
+        (fermer)="formAcces.set(null)"
+      >
+        <form #nga="ngForm" class="form" id="form-acces" (ngSubmit)="enregistrerAcces(nga)">
+          <div class="field">
+            <label for="a-email">Email de connexion</label>
+            <input id="a-email" class="input" type="email" name="email" required email autocomplete="off" [(ngModel)]="a.email" />
+          </div>
+          <div class="field">
+            <label for="a-mdp">{{ a.existant ? 'Nouveau mot de passe (laisser vide pour conserver)' : 'Mot de passe' }}</label>
+            <input id="a-mdp" class="input" type="password" name="password" minlength="6" autocomplete="new-password" [required]="!a.existant" [(ngModel)]="a.password" />
+            <span class="hint">6 caractères minimum. Communiquez-le au livreur de vive voix.</span>
+          </div>
+          @if (a.existant) {
+            <label class="switch">
+              <input type="checkbox" name="enabled" [(ngModel)]="a.enabled" /> Accès autorisé
+            </label>
+          }
+        </form>
+        <div pied class="pied-acces">
+          @if (a.existant) {
+            <button class="btn btn-ghost danger-text" (click)="supprimerAcces(a.personnel)"><app-icon name="trash" [size]="16" /> Retirer l'accès</button>
+          }
+          <span class="grow"></span>
+          <button class="btn btn-secondary" (click)="formAcces.set(null)">Annuler</button>
+          <button class="btn btn-primary" type="submit" form="form-acces">{{ a.existant ? 'Enregistrer' : 'Créer l’accès' }}</button>
+        </div>
+      </app-modal>
+    }
 
     @if (form(); as f) {
       <app-modal [titre]="f.idPersonnel ? 'Modifier l’employé' : 'Nouvel employé'" (fermer)="form.set(null)">
@@ -143,6 +192,29 @@ import { ModalComponent } from '../../ui/modal.component';
     .kv {
       margin: 0;
     }
+    .acces {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--surface-2);
+      border: 1px dashed var(--border-strong);
+    }
+    .ellipsis {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .pied-acces {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .danger-text {
+      color: var(--danger);
+    }
     .pied {
       justify-content: space-between;
       border-top: 1px solid var(--border);
@@ -160,6 +232,14 @@ export class PersonnelPage {
   protected personnel = signal<Personnel[] | null>(null);
   protected fonction = signal<string | null>(null);
   protected form = signal<Personnel | null>(null);
+  protected acces = signal<Record<number, Utilisateur>>({});
+  protected formAcces = signal<{
+    personnel: Personnel;
+    existant: boolean;
+    email: string;
+    password: string;
+    enabled: boolean;
+  } | null>(null);
 
   protected affiches = computed(() =>
     (this.personnel() ?? []).filter((p) => !this.fonction() || p.fonction?.toUpperCase() === this.fonction()),
@@ -174,8 +254,65 @@ export class PersonnelPage {
   }
 
   charger(): void {
-    this.api.personnel.liste().subscribe({
-      next: (l) => this.personnel.set(l),
+    forkJoin({ personnel: this.api.personnel.liste(), acces: this.api.accesLivreur.tous() }).subscribe({
+      next: (r) => {
+        this.personnel.set(r.personnel);
+        this.acces.set(r.acces);
+      },
+      error: (e) => this.toasts.erreur(e),
+    });
+  }
+
+  ouvrirAcces(p: Personnel): void {
+    const compte = this.acces()[p.idPersonnel!];
+    this.formAcces.set({
+      personnel: p,
+      existant: !!compte,
+      email: compte?.email ?? p.email ?? '',
+      password: '',
+      enabled: compte?.enabled ?? true,
+    });
+  }
+
+  enregistrerAcces(nga: NgForm): void {
+    const a = this.formAcces();
+    if (!a || nga.invalid) {
+      nga.control.markAllAsTouched();
+      this.toasts.erreur('Renseignez un email valide et un mot de passe d’au moins 6 caractères.');
+      return;
+    }
+    const donnees = { email: a.email.trim(), password: a.password || null, enabled: a.enabled };
+    const id = a.personnel.idPersonnel!;
+    const appel = a.existant ? this.api.accesLivreur.modifier(id, donnees) : this.api.accesLivreur.creer(id, donnees);
+    appel.subscribe({
+      next: (compte) => {
+        this.acces.update((m) => ({ ...m, [id]: compte }));
+        this.formAcces.set(null);
+        this.toasts.succes(a.existant ? 'Accès mis à jour' : `Accès créé : ${a.personnel.prenom} peut se connecter`);
+      },
+      error: (e) => this.toasts.erreur(e),
+    });
+  }
+
+  async supprimerAcces(p: Personnel): Promise<void> {
+    const ok = await this.confirm.demander({
+      titre: `Retirer l'accès de ${p.prenom} ?`,
+      message: 'Son compte de connexion sera supprimé. Sa fiche et ses livraisons sont conservées.',
+      libelle: 'Retirer l’accès',
+      danger: true,
+    });
+    if (!ok) return;
+    const id = p.idPersonnel!;
+    this.api.accesLivreur.supprimer(id).subscribe({
+      next: () => {
+        this.acces.update((m) => {
+          const copie = { ...m };
+          delete copie[id];
+          return copie;
+        });
+        this.formAcces.set(null);
+        this.toasts.succes('Accès retiré');
+      },
       error: (e) => this.toasts.erreur(e),
     });
   }
@@ -209,7 +346,7 @@ export class PersonnelPage {
   async supprimer(p: Personnel): Promise<void> {
     const ok = await this.confirm.demander({
       titre: `Supprimer ${p.prenom} ${p.nom} ?`,
-      message: 'Si cet employé a effectué des livraisons, désactivez-le plutôt.',
+      message: 'Son éventuel accès à l’application sera aussi supprimé. S’il a effectué des livraisons, désactivez-le plutôt.',
       libelle: 'Supprimer',
       danger: true,
     });

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
+  AccesLivreurRequest,
   Approvisionnement,
   ApprovisionnementRequest,
   Categorie,
@@ -84,8 +85,27 @@ export class ApiService {
 
   readonly livraisons = {
     liste: () => this.http.get<Livraison[]>(`${this.base}/livraisons`),
-    maj: (id: number, data: { livreurId?: number | null; statut?: StatutLivraison | null }) =>
+    maj: (id: number, data: { livreurId?: number | null; statut?: StatutLivraison | null; motif?: string | null }) =>
       this.http.patch<Livraison>(`${this.base}/livraisons/${id}`, data),
+  };
+
+  /** Espace du livreur connecté. */
+  readonly livreur = {
+    mesLivraisons: () => this.http.get<Livraison[]>(`${this.base}/livreur/livraisons`),
+    depart: (id: number) => this.http.post<Livraison>(`${this.base}/livreur/livraisons/${id}/depart`, null),
+    livree: (id: number) => this.http.post<Livraison>(`${this.base}/livreur/livraisons/${id}/livree`, null),
+    echec: (id: number, motif: string, commentaire: string | null) =>
+      this.http.post<Livraison>(`${this.base}/livreur/livraisons/${id}/echec`, { motif, commentaire }),
+  };
+
+  /** Accès de connexion des livreurs, gérés depuis la page Personnel. */
+  readonly accesLivreur = {
+    tous: () => this.http.get<Record<number, Utilisateur>>(`${this.base}/personnel/acces`),
+    creer: (idPersonnel: number, data: AccesLivreurRequest) =>
+      this.http.post<Utilisateur>(`${this.base}/personnel/${idPersonnel}/acces`, data),
+    modifier: (idPersonnel: number, data: AccesLivreurRequest) =>
+      this.http.put<Utilisateur>(`${this.base}/personnel/${idPersonnel}/acces`, data),
+    supprimer: (idPersonnel: number) => this.http.delete<void>(`${this.base}/personnel/${idPersonnel}/acces`),
   };
 
   readonly produits = Object.assign(

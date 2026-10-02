@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "livraison")
@@ -25,6 +26,16 @@ public class Livraison implements Serializable {
     private LocalDate dateLivraison;
 
     private String adresseDestination;
+
+    /** Moment où le livreur a indiqué « Je pars ». */
+    private LocalDateTime heureDepart;
+
+    /** Moment où la livraison a été marquée livrée ou échouée. */
+    private LocalDateTime heureFin;
+
+    /** Raison de l'échec, saisie par le livreur ou l'équipe. */
+    @Column(length = 255)
+    private String motifEchec;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)

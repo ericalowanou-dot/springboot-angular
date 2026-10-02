@@ -40,11 +40,19 @@ public final class AuthDtos {
     }
 
     public record UserDto(Integer id, String email, String nom, String prenom, String telephone,
-                          User.Role role, boolean enabled, LocalDateTime derniereConnexion) {
+                          User.Role role, boolean enabled, LocalDateTime derniereConnexion, Integer personnelId) {
 
         public static UserDto of(User u) {
             return new UserDto(u.getIdUser(), u.getEmail(), u.getNom(), u.getPrenom(), u.getTelephone(),
-                    u.getRole(), Boolean.TRUE.equals(u.getEnabled()), u.getDerniereConnexion());
+                    u.getRole(), Boolean.TRUE.equals(u.getEnabled()), u.getDerniereConnexion(),
+                    u.getPersonnel() == null ? null : u.getPersonnel().getIdPersonnel());
         }
+    }
+
+    /** Création ou modification de l'accès d'un livreur (mot de passe optionnel en modification). */
+    public record AccesLivreurRequest(
+            @NotBlank(message = "L'email est obligatoire") @Email(message = "Email invalide") String email,
+            @Size(min = 6, message = "Le mot de passe doit contenir au moins 6 caractères") String password,
+            Boolean enabled) {
     }
 }

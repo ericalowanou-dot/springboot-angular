@@ -41,6 +41,7 @@ class ApiIntegrationTest {
         token = json.readTree(reponse).get("token").asText();
     }
 
+
     @Test
     void refuseLesIdentifiantsInvalides() throws Exception {
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
@@ -112,6 +113,77 @@ class ApiIntegrationTest {
         JsonNode p = appel(get("/api/produits/" + produit), null, 200);
         assertThat(p.get("quantiteStock").asInt()).isEqualTo(25);
         assertThat(p.get("enAlerte").asBoolean()).isFalse();
+    }
+
+    @Test
+    void parcoursCompletDuLivreur() throws Exception {
+        int plat = creerPlat("Poulet braisé", 5000);
+        int livreurId = appel(post("/api/personnel"),
+                "{\"nom\":\"Adjo\",\"prenom\":\"Kodjo\",\"fonction\":\"LIVREUR\"}", 201).get("idPersonnel").asInt();
+        int serveurId = appel(post("/api/personnel"),
+                "{\"nom\":\"Dossou\",\"prenom\":\"Afi\",\"fonction\":\"SERVEUR\"}", 201).get("idPersonnel").asInt();
+
+        // seul un employé de fonction LIVREUR peut recevoir un accès livreur
+        appel(post("/api/personnel/" + serveurId + "/acces"), "{\"email\":\"afi@test.com\",\"password\":\"secret1\"}", 409);
+        appel(post("/api/personnel/" + livreurId + "/acces"), "{\"email\":\"kodjo@test.com\",\"password\":\"secret1\"}", 201);
+        appel(post("/api/personnel/" + livreurId + "/acces"), "{\"email\":\"autre@test.com\",\"password\":\"secret1\"}", 409);
+        // un compte livreur ne se crée pas depuis la gestion des utilisateurs
+        appel(post("/api/users"), "{\"email\":\"x@test.com\",\"nom\":\"X\",\"prenom\":\"Y\",\"role\":\"LIVREUR\",\"password\":\"secret1\"}", 409);
+
+        JsonNode cmd = appel(post("/api/commandes"),
+                "{\"type\":\"LIVRAISON\",\"adresseLivraison\":\"Bè\",\"lignes\":[{\"platId\":%d,\"quantite\":1}]}".formatted(plat), 201);
+        int livraison = cmd.get("livraison").get("idLivraison").asInt();
+        JsonNode assignee = appel(patch("/api/livraisons/" + livraison), "{\"livreurId\":%d}".formatted(livreurId), 200);
+        assertThat(assignee.get("statut").asText()).isEqualTo("ASSIGNEE");
+
+        String tokenAdmin = token;
+        token = jeton("kodjo@test.com", "secret1");
+
+        // le livreur ne voit que son espace
+        appel(get("/api/commandes"), null, 403);
+        appel(get("/api/personnel"), null, 403);
+        assertThat(appel(get("/api/livreur/livraisons"), null, 200)).hasSize(1);
+
+        appel(post("/api/livreur/livraisons/" + livraison + "/livree"), "", 409); // doit d'abord partir
+        JsonNode parti = appel(post("/api/livreur/livraisons/" + livraison + "/depart"), "", 200);
+        assertThat(parti.get("statut").asText()).isEqualTo("EN_COURS");
+        assertThat(parti.get("heureDepart").isNull()).isFalse();
+
+        appel(post("/api/livreur/livraisons/" + livraison + "/echec"), "{\"motif\":\"\"}", 400);
+        JsonNode echec = appel(post("/api/livreur/livraisons/" + livraison + "/echec"),
+                "{\"motif\":\"Client absent\",\"commentaire\":\"pas de réponse au téléphone\"}", 200);
+        assertThat(echec.get("statut").asText()).isEqualTo("ECHOUEE");
+        assertThat(echec.get("motifEchec").asText()).isEqualTo("Client absent — pas de réponse au téléphone");
+
+        // l'équipe réassigne : le livreur repart
+        token = tokenAdmin;
+        assertThat(appel(patch("/api/livraisons/" + livraison), "{\"livreurId\":%d}".formatted(livreurId), 200)
+                .get("statut").asText()).isEqualTo("ASSIGNEE");
+        token = jeton("kodjo@test.com", "secret1");
+        appel(post("/api/livreur/livraisons/" + livraison + "/depart"), "", 200);
+        appel(post("/api/livreur/livraisons/" + livraison + "/livree"), "", 200);
+
+        token = tokenAdmin;
+        assertThat(appel(get("/api/commandes/" + cmd.get("idCommande").asInt()), null, 200)
+                .get("statut").asText()).isEqualTo("LIVREE");
+        assertThat(appel(get("/api/dashboard"), null, 200).get("livraisonsLivreesJour").asLong()).isEqualTo(1);
+
+        // la suppression de la fiche supprime aussi l'accès
+        int autre = appel(post("/api/personnel"),
+                "{\"nom\":\"Folly\",\"prenom\":\"Sena\",\"fonction\":\"LIVREUR\"}", 201).get("idPersonnel").asInt();
+        appel(post("/api/personnel/" + autre + "/acces"), "{\"email\":\"sena@test.com\",\"password\":\"secret1\"}", 201);
+        appel(delete("/api/personnel/" + autre), null, 204);
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"sena@test.com\",\"password\":\"secret1\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private String jeton(String email, String motDePasse) throws Exception {
+        String reponse = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"%s\",\"password\":\"%s\"}".formatted(email, motDePasse)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return json.readTree(reponse).get("token").asText();
     }
 
     private int creerPlat(String nom, double prix) throws Exception {

@@ -29,14 +29,16 @@ import java.util.List;
  * Règles d'accès :
  * - public : connexion, consultation de la carte (plats, catégories, menus) et des images ;
  * - ADMIN : gestion des comptes utilisateurs ;
- * - ADMIN / GERANT : catalogue, personnel, stocks, fournisseurs, suppressions ;
- * - tout utilisateur connecté : commandes, clients, livraisons, tableau de bord.
+ * - ADMIN / GERANT : catalogue, personnel (dont les accès livreur), stocks, fournisseurs, suppressions ;
+ * - ADMIN / GERANT / EMPLOYE : commandes, clients, livraisons, tableau de bord ;
+ * - LIVREUR : uniquement /api/livreur/** (ses propres livraisons) et son profil.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private static final String[] GESTION = {"ADMIN", "GERANT"};
+    private static final String[] EQUIPE = {"ADMIN", "GERANT", "EMPLOYE"};
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -57,13 +59,17 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/health", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/images/**", "/api/plats/**",
                                 "/api/categories/**", "/api/menus/**").permitAll()
+                        .requestMatchers("/api/auth/**").authenticated()
+                        // le livreur n'accède qu'à son espace, et seul lui y accède
+                        .requestMatchers("/api/livreur/**").hasRole("LIVREUR")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/personnel/**").authenticated()
+                        // liste du personnel : nécessaire à l'équipe pour assigner les livreurs
+                        .requestMatchers(HttpMethod.GET, "/api/personnel").hasAnyRole(EQUIPE)
                         .requestMatchers("/api/personnel/**", "/api/fournisseurs/**", "/api/produits/**",
                                 "/api/approvisionnements/**", "/api/images/**", "/api/plats/**",
                                 "/api/categories/**", "/api/menus/**").hasAnyRole(GESTION)
                         .requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyRole(GESTION)
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/**").hasAnyRole(EQUIPE)
                         // les anciens endpoints (hors /api) ne sont plus exposés
                         .anyRequest().denyAll())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

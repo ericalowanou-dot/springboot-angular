@@ -43,6 +43,14 @@
           <div class="stat-label">En cours de service</div>
           <div class="stat-value">{{ d.commandesEnCours }}</div>
           <span class="small muted">à préparer ou servir</span>
+          @if (d.livraisonsLivreesJour || d.livraisonsEchoueesJour) {
+            <div class="small livraisons-jour">
+              🛵 {{ d.livraisonsLivreesJour }} livrée(s)
+              @if (d.livraisonsEchoueesJour) {
+                · <span class="echec">{{ d.livraisonsEchoueesJour }} échec(s)</span>
+              }
+            </div>
+          }
         </div>
       </a>
       <div class="card stat">

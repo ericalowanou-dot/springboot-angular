@@ -38,19 +38,25 @@ Puis ouvrir http://localhost:4200.
 | Administrateur | admin@restaurant.com | admin123 |
 | Gérant | gerant@restaurant.com | gerant123 |
 | Employé | employe@restaurant.com | employe123 |
+| Livreur | livreur@restaurant.com | livreur123 |
 
 > ⚠️ Ces comptes ne sont créés que si la table des utilisateurs est vide. En production, définissez
 > `ADMIN_EMAIL` / `ADMIN_PASSWORD` et mettez `DEMO_DATA=false`.
 
 ## Rôles et droits
 
-| Fonctionnalité | Employé | Gérant | Admin |
-|---|:-:|:-:|:-:|
-| Tableau de bord, commandes, encaissement, clients, livraisons | ✅ | ✅ | ✅ |
-| Consultation de la carte | ✅ | ✅ | ✅ |
-| Modification de la carte, stocks, fournisseurs, approvisionnements, personnel | | ✅ | ✅ |
-| Suppressions | | ✅ | ✅ |
-| Gestion des comptes utilisateurs | | | ✅ |
+| Fonctionnalité | Livreur | Employé | Gérant | Admin |
+|---|:-:|:-:|:-:|:-:|
+| Espace livreur : ses courses, « Je pars », « Livrée », « Échec » + motif | ✅ | | | |
+| Tableau de bord, commandes, encaissement, clients, livraisons | | ✅ | ✅ | ✅ |
+| Consultation de la carte | | ✅ | ✅ | ✅ |
+| Modification de la carte, stocks, fournisseurs, approvisionnements, personnel | | | ✅ | ✅ |
+| Création des accès livreur (depuis la fiche Personnel) | | | ✅ | ✅ |
+| Suppressions | | | ✅ | ✅ |
+| Gestion des comptes utilisateurs | | | | ✅ |
+
+Cycle d'une livraison : **À assigner → Assignée** (livreur choisi) **→ En route** (« Je pars ») **→ Livrée** ou
+**Échouée** (avec motif). Après un échec, l'équipe peut réassigner la course.
 
 La carte (`GET /api/plats`, `/api/categories`, `/api/menus`) et les images sont publiques.
 

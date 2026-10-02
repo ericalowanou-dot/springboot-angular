@@ -1,6 +1,6 @@
 // Types partagés, alignés sur les réponses JSON de l'API Spring Boot.
 
-export type Role = 'ADMIN' | 'GERANT' | 'EMPLOYE' | 'CLIENT';
+export type Role = 'ADMIN' | 'GERANT' | 'EMPLOYE' | 'LIVREUR' | 'CLIENT';
 
 export interface Utilisateur {
   id: number;
@@ -11,6 +11,7 @@ export interface Utilisateur {
   role: Role;
   enabled: boolean;
   derniereConnexion?: string | null;
+  personnelId?: number | null;
 }
 
 export interface UtilisateurRequest {
@@ -19,6 +20,12 @@ export interface UtilisateurRequest {
   prenom: string;
   telephone?: string | null;
   role: Role;
+  password?: string | null;
+  enabled?: boolean;
+}
+
+export interface AccesLivreurRequest {
+  email: string;
   password?: string | null;
   enabled?: boolean;
 }
@@ -66,7 +73,7 @@ export interface Client {
 
 export type StatutCommande = 'EN_ATTENTE' | 'EN_PREPARATION' | 'PRETE' | 'SERVIE' | 'LIVREE' | 'ANNULEE';
 export type TypeCommande = 'SUR_PLACE' | 'A_EMPORTER' | 'LIVRAISON';
-export type StatutLivraison = 'A_ASSIGNER' | 'EN_COURS' | 'LIVREE' | 'ECHOUEE';
+export type StatutLivraison = 'A_ASSIGNER' | 'ASSIGNEE' | 'EN_COURS' | 'LIVREE' | 'ECHOUEE';
 
 export interface LigneCommande {
   idLigne: number;
@@ -88,6 +95,9 @@ export interface Livraison {
   idLivraison: number;
   dateLivraison?: string | null;
   adresseDestination: string;
+  heureDepart?: string | null;
+  heureFin?: string | null;
+  motifEchec?: string | null;
   statut: StatutLivraison | null;
   livreur?: Personnel | null;
   commande?: Commande;
@@ -185,6 +195,8 @@ export interface Dashboard {
   totalPlats: number;
   panierMoyen: number;
   variationJour: number;
+  livraisonsLivreesJour: number;
+  livraisonsEchoueesJour: number;
   ventes7Jours: { date: string; montant: number; commandes: number }[];
   topPlats: { idPlat: number; nom: string; imageUrl?: string | null; quantite: number; montant: number }[];
   repartitionStatuts: Record<string, number>;

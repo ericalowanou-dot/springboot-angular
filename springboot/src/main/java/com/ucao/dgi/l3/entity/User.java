@@ -57,6 +57,12 @@ public class User implements Serializable, UserDetails {
     @JsonIgnore
     private Client client;
 
+    // Fiche du personnel associée (obligatoire pour un compte LIVREUR)
+    @OneToOne
+    @JoinColumn(name = "personnel_id", unique = true)
+    @JsonIgnore
+    private Personnel personnel;
+
     private java.time.LocalDateTime derniereConnexion;
 
     @Column(nullable = false)
@@ -78,6 +84,7 @@ public class User implements Serializable, UserDetails {
     // Enum pour les rôles
     public enum Role {
         EMPLOYE,
+        LIVREUR,
         CLIENT,
         ADMIN,
         GERANT

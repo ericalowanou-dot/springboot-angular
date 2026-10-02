@@ -146,6 +146,16 @@
   border-radius: 9px;
 }
 
+.livraisons-jour {
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.livraisons-jour .echec {
+  color: var(--danger);
+}
+
 .ok {
   color: var(--success);
   font-weight: 600;

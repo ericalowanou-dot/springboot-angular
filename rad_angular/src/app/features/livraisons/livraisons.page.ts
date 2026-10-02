@@ -20,7 +20,7 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
       <div class="page-head">
         <div>
           <h1>Livraisons</h1>
-          <p>Assignez un livreur et suivez chaque course jusqu'au client.</p>
+          <p>Assignez un livreur : il suit ensuite la course depuis son téléphone (« Je pars », « Livrée » ou « Échec »).</p>
         </div>
         <button class="btn btn-secondary" (click)="charger()"><app-icon name="refresh" [size]="16" /> Actualiser</button>
       </div>
@@ -58,7 +58,14 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
                     }
                   </div>
 
-                  @if (l.statut === 'A_ASSIGNER' || l.statut === 'EN_COURS' || l.statut === null) {
+                  @if (l.motifEchec) {
+                    <div class="motif"><app-icon name="alert" [size]="15" /> {{ l.motifEchec }}</div>
+                  }
+                  @if (l.heureDepart && l.statut === 'EN_COURS') {
+                    <div class="ligne small"><app-icon name="truck" [size]="14" /> Parti à {{ l.heureDepart | date: 'HH:mm' }}</div>
+                  }
+
+                  @if (l.statut !== 'LIVREE' && l.statut !== 'EN_COURS') {
                     <div class="field">
                       <select
                         class="select"
@@ -66,7 +73,7 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
                         (ngModelChange)="assigner(l, $event)"
                         [attr.aria-label]="'Livreur pour la commande ' + l.commande?.idCommande"
                       >
-                        <option [ngValue]="null" disabled>Choisir un livreur…</option>
+                        <option [ngValue]="null" disabled>{{ l.statut === 'ECHOUEE' ? 'Réassigner à…' : 'Choisir un livreur…' }}</option>
                         @for (p of livreurs(); track p.idPersonnel) {
                           <option [ngValue]="p.idPersonnel">{{ p.prenom }} {{ p.nom }}</option>
                         }
@@ -76,6 +83,9 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
                     <div class="ligne"><app-icon name="truck" [size]="15" /> {{ l.livreur.prenom }} {{ l.livreur.nom }}</div>
                   }
 
+                  @if (l.statut === 'ASSIGNEE') {
+                    <button class="btn btn-secondary btn-sm" (click)="changer(l, 'EN_COURS')">Marquer le départ</button>
+                  }
                   @if (l.statut === 'EN_COURS') {
                     <div class="row">
                       <button class="btn btn-success btn-sm grow" (click)="changer(l, 'LIVREE')">
@@ -84,8 +94,8 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
                       <button class="btn btn-secondary btn-sm" (click)="changer(l, 'ECHOUEE')">Échec</button>
                     </div>
                   }
-                  @if (l.statut === 'LIVREE' && l.dateLivraison) {
-                    <span class="small muted">Livrée le {{ l.dateLivraison | date: 'd MMMM' }}</span>
+                  @if (l.statut === 'LIVREE' && (l.heureFin || l.dateLivraison)) {
+                    <span class="small muted">Livrée le {{ (l.heureFin ?? l.dateLivraison) | date: l.heureFin ? 'd MMMM à HH:mm' : 'd MMMM' }}</span>
                   }
                 </article>
               } @empty {
@@ -103,7 +113,7 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
   styles: `
     .board {
       display: grid;
-      grid-template-columns: repeat(4, minmax(240px, 1fr));
+      grid-template-columns: repeat(5, minmax(240px, 1fr));
       gap: 16px;
       overflow-x: auto;
       padding-bottom: 8px;
@@ -143,6 +153,17 @@ type Colonne = { statut: StatutLivraison; titre: string; icone: string };
     .grow {
       flex: 1;
     }
+    .motif {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: var(--danger-soft);
+      color: var(--danger);
+      font-weight: 500;
+      font-size: 13px;
+    }
     .vide {
       text-align: center;
       color: var(--muted);
@@ -157,6 +178,7 @@ export class LivraisonsPage {
   protected statuts = STATUTS;
   protected colonnes: Colonne[] = [
     { statut: 'A_ASSIGNER', titre: 'À assigner', icone: 'clock' },
+    { statut: 'ASSIGNEE', titre: 'Attente du livreur', icone: 'user' },
     { statut: 'EN_COURS', titre: 'En route', icone: 'truck' },
     { statut: 'LIVREE', titre: 'Livrées', icone: 'check' },
     { statut: 'ECHOUEE', titre: 'Échouées', icone: 'ban' },
@@ -166,7 +188,7 @@ export class LivraisonsPage {
   protected livreurs = signal<Personnel[]>([]);
 
   protected parStatut = computed(() => {
-    const groupes: Record<StatutLivraison, Livraison[]> = { A_ASSIGNER: [], EN_COURS: [], LIVREE: [], ECHOUEE: [] };
+    const groupes: Record<StatutLivraison, Livraison[]> = { A_ASSIGNER: [], ASSIGNEE: [], EN_COURS: [], LIVREE: [], ECHOUEE: [] };
     for (const l of this.livraisons() ?? []) {
       // les commandes annulées ne sont plus à livrer
       if (l.commande?.statut === 'ANNULEE' && l.statut !== 'ECHOUEE') continue;
@@ -191,14 +213,19 @@ export class LivraisonsPage {
   }
 
   assigner(l: Livraison, livreurId: number): void {
-    this.maj(l, { livreurId }, 'Livreur assigné');
+    this.maj(l, { livreurId }, l.statut === 'ECHOUEE' ? 'Livraison réassignée' : 'Livreur assigné');
   }
 
   changer(l: Livraison, statut: StatutLivraison): void {
-    this.maj(l, { statut }, statut === 'LIVREE' ? 'Livraison terminée 🎉' : 'Livraison marquée en échec');
+    const messages: Partial<Record<StatutLivraison, string>> = {
+      EN_COURS: 'Départ enregistré',
+      LIVREE: 'Livraison terminée 🎉',
+      ECHOUEE: 'Livraison marquée en échec',
+    };
+    this.maj(l, { statut, motif: statut === 'ECHOUEE' ? 'Signalé par le restaurant' : null }, messages[statut] ?? 'Livraison mise à jour');
   }
 
-  private maj(l: Livraison, data: { livreurId?: number; statut?: StatutLivraison }, message: string): void {
+  private maj(l: Livraison, data: { livreurId?: number; statut?: StatutLivraison; motif?: string | null }, message: string): void {
     this.api.livraisons.maj(l.idLivraison, data).subscribe({
       next: (maj) => {
         this.livraisons.update((liste) => (liste ?? []).map((x) => (x.idLivraison === maj.idLivraison ? maj : x)));

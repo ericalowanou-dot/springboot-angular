@@ -1,0 +1,158 @@
+<header class="entete">
+  <div class="brand">
+    <span class="logo"><app-icon name="truck" [size]="20" /></span>
+    <div>
+      <strong>Bonjour {{ auth.utilisateur()?.prenom }}</strong>
+      <small>Espace livreur · Le Gourmet</small>
+    </div>
+  </div>
+  <div class="row">
+    <button class="icon-btn" (click)="charger()" aria-label="Actualiser"><app-icon name="refresh" /></button>
+    <button class="icon-btn" (click)="theme.basculer()" aria-label="Changer de thème">
+      <app-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" />
+    </button>
+    <button class="icon-btn" (click)="auth.logout()" aria-label="Se déconnecter"><app-icon name="logout" /></button>
+  </div>
+</header>
+
+<main class="contenu">
+  <div class="compteurs">
+    <div class="compteur violet">
+      <strong>{{ aRecuperer() }}</strong>
+      <span>à récupérer</span>
+    </div>
+    <div class="compteur info">
+      <strong>{{ enRoute() }}</strong>
+      <span>en route</span>
+    </div>
+    <div class="compteur success">
+      <strong>{{ livrees() }}</strong>
+      <span>livrées auj.</span>
+    </div>
+  </div>
+
+  <div class="segmented onglets">
+    <button [class.active]="onglet() === 'actives'" (click)="onglet.set('actives')">
+      À faire <span class="count">{{ actives().length }}</span>
+    </button>
+    <button [class.active]="onglet() === 'terminees'" (click)="onglet.set('terminees')">
+      Terminées aujourd'hui <span class="count">{{ terminees().length }}</span>
+    </button>
+  </div>
+
+  @if (livraisons() === null) {
+    @for (i of [1, 2]; track i) {
+      <div class="skeleton" style="height: 220px; margin-bottom: 14px"></div>
+    }
+  } @else {
+    @for (l of affichees(); track l.idLivraison) {
+      <article class="course card" [class.route]="l.statut === 'EN_COURS'">
+        <div class="row between">
+          <div>
+            <h2>Commande #{{ l.commande?.idCommande }}</h2>
+            <span class="small muted">{{ (l.commande?.creeLe ?? l.commande?.dateCommande) | date: 'HH:mm' }}</span>
+          </div>
+          <span class="badge {{ statuts[l.statut ?? '']?.ton }}">{{ l.statut === 'EN_COURS' ? 'En route' : (l.statut | libelle: 'statut') }}</span>
+        </div>
+
+        @if (l.statut !== 'ECHOUEE') {
+          <div class="paiement" [class.a-encaisser]="!l.commande?.payee">
+            <app-icon name="wallet" [size]="18" />
+            @if (l.commande?.payee) {
+              <span>Déjà payée · {{ l.commande?.montantTotal | fcfa }}</span>
+            } @else if (l.statut === 'LIVREE') {
+              <span><strong>À remettre à la caisse : {{ l.commande?.montantTotal | fcfa }}</strong></span>
+            } @else {
+              <span><strong>À encaisser : {{ l.commande?.montantTotal | fcfa }}</strong></span>
+            }
+          </div>
+        }
+
+        <a class="ligne-action" [href]="lienCarte(l.adresseDestination)" target="_blank" rel="noopener">
+          <app-icon name="pin" [size]="18" />
+          <span class="grow">{{ l.adresseDestination }}</span>
+          <span class="petit-lien">Itinéraire <app-icon name="external" [size]="14" /></span>
+        </a>
+
+        @if (l.commande?.client; as c) {
+          <a class="ligne-action" [href]="lienTel(c.telephone)">
+            <app-icon name="phone" [size]="18" />
+            <span class="grow">{{ c.prenom }} {{ c.nom }}</span>
+            <span class="petit-lien">{{ c.telephone }}</span>
+          </a>
+        }
+
+        <ul class="plats">
+          @for (lg of l.commande?.lignes ?? []; track lg.idLigne) {
+            <li><span class="qte">{{ lg.quantite }}×</span> {{ lg.plat.nom }}</li>
+          }
+        </ul>
+
+        @if (l.commande?.notes) {
+          <div class="notes"><app-icon name="info" [size]="16" /> {{ l.commande?.notes }}</div>
+        }
+
+        @switch (l.statut) {
+          @case ('ASSIGNEE') {
+            <button class="btn btn-primary btn-lg btn-block" [disabled]="enCours() === l.idLivraison" (click)="depart(l)">
+              @if (enCours() === l.idLivraison) {
+                <span class="spinner"></span>
+              } @else {
+                🛵
+              }
+              Je pars
+            </button>
+          }
+          @case ('EN_COURS') {
+            <p class="small muted depart">Parti à {{ l.heureDepart | date: 'HH:mm' }}</p>
+            <div class="boutons">
+              <button class="btn btn-success btn-lg" [disabled]="enCours() === l.idLivraison" (click)="livree(l)">
+                <app-icon name="check" [size]="18" /> Livrée
+              </button>
+              <button class="btn btn-danger btn-lg" [disabled]="enCours() === l.idLivraison" (click)="ouvrirEchec(l)">
+                <app-icon name="x" [size]="18" /> Échec
+              </button>
+            </div>
+          }
+          @default {
+            <div class="bilan" [class.ok]="l.statut === 'LIVREE'">
+              @if (l.statut === 'LIVREE') {
+                <app-icon name="check" [size]="16" /> Livrée @if (l.heureFin) { à {{ l.heureFin | date: 'HH:mm' }} }
+              } @else {
+                <app-icon name="alert" [size]="16" /> Échec @if (l.heureFin) { à {{ l.heureFin | date: 'HH:mm' }} } · {{ l.motifEchec || 'motif non précisé' }}
+              }
+            </div>
+          }
+        }
+      </article>
+    } @empty {
+      <div class="empty card">
+        <span class="empty-icon"><app-icon name="truck" [size]="26" /></span>
+        <h3>{{ onglet() === 'actives' ? 'Aucune course pour le moment' : 'Rien de terminé aujourd’hui' }}</h3>
+        <p>
+          {{ onglet() === 'actives' ? 'Les livraisons qui vous sont assignées apparaîtront ici automatiquement.' : 'Vos livraisons du jour s’afficheront ici.' }}
+        </p>
+      </div>
+    }
+  }
+</main>
+
+@if (echec(); as e) {
+  <app-modal titre="Signaler un échec" [sousTitre]="'Commande #' + e.livraison.commande?.idCommande" taille="sm" (fermer)="echec.set(null)">
+    <div class="form">
+      <div class="motifs">
+        @for (m of motifs; track m) {
+          <button type="button" class="motif" [class.on]="e.motif === m" (click)="e.motif = m">{{ m }}</button>
+        }
+      </div>
+      <div class="field">
+        <label for="commentaire">Commentaire {{ e.motif === 'Autre' ? '(obligatoire)' : '(facultatif)' }}</label>
+        <textarea id="commentaire" class="textarea" rows="3" maxlength="130" placeholder="Ex. sonné deux fois, appelé sans réponse…" [(ngModel)]="e.commentaire"></textarea>
+      </div>
+    </div>
+    <div pied>
+      <button class="btn btn-secondary" (click)="echec.set(null)">Annuler</button>
+      <button class="btn btn-danger" (click)="validerEchec()">Confirmer l'échec</button>
+    </div>
+  </app-modal>
+}

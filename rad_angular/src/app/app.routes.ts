@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, inviteGuard, roleGuard } from './core/guards';
+import { authGuard, equipeGuard, inviteGuard, roleGuard } from './core/guards';
 import { ShellComponent } from './layout/shell.component';
 
 export const routes: Routes = [
@@ -15,9 +15,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/carte/carte.page').then((m) => m.CartePage),
   },
   {
+    path: 'livreur',
+    title: 'Mes livraisons · Le Gourmet',
+    canActivate: [authGuard, roleGuard('LIVREUR')],
+    loadComponent: () => import('./features/livreur/livreur.page').then((m) => m.LivreurPage),
+  },
+  {
     path: '',
     component: ShellComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, equipeGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {

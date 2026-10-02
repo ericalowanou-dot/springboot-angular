@@ -10,6 +10,7 @@ export const STATUTS: Partial<Record<string, { label: string; ton: string }>> = 
   ANNULEE: { label: 'Annulée', ton: 'danger' },
   // livraisons
   A_ASSIGNER: { label: 'À assigner', ton: 'warning' },
+  ASSIGNEE: { label: 'Assignée', ton: 'violet' },
   EN_COURS: { label: 'En cours', ton: 'info' },
   ECHOUEE: { label: 'Échouée', ton: 'danger' },
   // approvisionnements
@@ -27,7 +28,7 @@ export const LIBELLES: Record<string, Record<string, string>> = {
     CAISSIER: 'Caissier',
     GERANT: 'Gérant',
   },
-  role: { ADMIN: 'Administrateur', GERANT: 'Gérant', EMPLOYE: 'Employé', CLIENT: 'Client' },
+  role: { ADMIN: 'Administrateur', GERANT: 'Gérant', EMPLOYE: 'Employé', LIVREUR: 'Livreur', CLIENT: 'Client' },
 };
 
 const nombre = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });

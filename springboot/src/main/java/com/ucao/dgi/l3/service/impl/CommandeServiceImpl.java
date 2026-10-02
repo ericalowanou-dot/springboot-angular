@@ -99,6 +99,7 @@ public class CommandeServiceImpl implements CommandeService {
             if (nouveau == StatutCommande.LIVREE) {
                 liv.setStatut(StatutLivraison.LIVREE);
                 liv.setDateLivraison(LocalDate.now());
+                liv.setHeureFin(LocalDateTime.now());
             } else if (nouveau == StatutCommande.ANNULEE) {
                 liv.setStatut(StatutLivraison.ECHOUEE);
             }

@@ -6,6 +6,7 @@ import com.ucao.dgi.l3.dto.DashboardDto.VenteJour;
 import com.ucao.dgi.l3.entity.*;
 import com.ucao.dgi.l3.repository.ClientRepository;
 import com.ucao.dgi.l3.repository.CommandeRepository;
+import com.ucao.dgi.l3.repository.LivraisonRepository;
 import com.ucao.dgi.l3.repository.PlatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +27,7 @@ public class DashboardService {
     private final CommandeRepository commandeRepository;
     private final ClientRepository clientRepository;
     private final PlatRepository platRepository;
+    private final LivraisonRepository livraisonRepository;
     private final ProduitService produitService;
 
     public DashboardDto calculer() {
@@ -70,8 +72,12 @@ public class DashboardService {
                 .findAll(PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "idCommande")))
                 .getContent();
 
+        List<Livraison> livraisonsJour = livraisonRepository.findAllByDateLivraison(aujourdHui);
+        long livrees = livraisonsJour.stream().filter(l -> l.getStatut() == StatutLivraison.LIVREE).count();
+        long echouees = livraisonsJour.stream().filter(l -> l.getStatut() == StatutLivraison.ECHOUEE).count();
+
         return new DashboardDto(caJour, caMois, duJour.size(), enCours, clientRepository.count(),
-                platRepository.count(), panierMoyen, variation, ventes7Jours, topPlats(valides), repartition,
+                platRepository.count(), panierMoyen, variation, livrees, echouees, ventes7Jours, topPlats(valides), repartition,
                 produitService.findEnAlerte(), dernieres);
     }
 

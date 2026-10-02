@@ -12,7 +12,13 @@ export const authGuard: CanActivateFn = (_route, state) => {
 
 export const inviteGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
-  return auth.connecte() ? inject(Router).createUrlTree(['/dashboard']) : true;
+  return auth.connecte() ? inject(Router).parseUrl(auth.accueil()) : true;
+};
+
+/** Espace de gestion réservé à l'équipe du restaurant : le livreur est renvoyé vers son espace. */
+export const equipeGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.estLivreur() ? inject(Router).parseUrl('/livreur') : true;
 };
 
 export const roleGuard =

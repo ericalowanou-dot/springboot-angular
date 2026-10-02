@@ -25,6 +25,12 @@ export class AuthService {
   readonly connecte = computed(() => this.session() !== null);
   readonly peutGerer = computed(() => this.aRole('ADMIN', 'GERANT'));
   readonly estAdmin = computed(() => this.aRole('ADMIN'));
+  readonly estLivreur = computed(() => this.aRole('LIVREUR'));
+
+  /** Page d'accueil selon le rôle : le livreur a son propre espace. */
+  accueil(): string {
+    return this.estLivreur() ? '/livreur' : '/dashboard';
+  }
 
   get token(): string | null {
     return this.session()?.token ?? null;

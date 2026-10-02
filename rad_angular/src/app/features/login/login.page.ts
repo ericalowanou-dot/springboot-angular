@@ -33,6 +33,7 @@ export class LoginPage {
         { role: 'Administrateur', email: 'admin@restaurant.com', mdp: 'admin123' },
         { role: 'Gérant', email: 'gerant@restaurant.com', mdp: 'gerant123' },
         { role: 'Employé', email: 'employe@restaurant.com', mdp: 'employe123' },
+        { role: 'Livreur', email: 'livreur@restaurant.com', mdp: 'livreur123' },
       ];
 
   remplir(email: string, mdp: string): void {
@@ -50,7 +51,10 @@ export class LoginPage {
     this.auth.login(this.email, this.motDePasse).subscribe({
       next: () => {
         const cible = this.retour();
-        this.router.navigateByUrl(cible && cible.startsWith('/') ? cible : '/dashboard');
+        const accueil = this.auth.accueil();
+        this.router.navigateByUrl(
+          !this.auth.estLivreur() && cible && cible.startsWith('/') ? cible : accueil,
+        );
       },
       error: (err) => {
         this.erreur.set(messageErreur(err));

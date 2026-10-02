@@ -17,6 +17,8 @@ public record DashboardDto(
         long totalPlats,
         double panierMoyen,
         double variationJour,
+        long livraisonsLivreesJour,
+        long livraisonsEchoueesJour,
         List<VenteJour> ventes7Jours,
         List<TopPlat> topPlats,
         Map<String, Long> repartitionStatuts,

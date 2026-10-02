@@ -4,6 +4,7 @@ import com.ucao.dgi.l3.entity.Personnel;
 import com.ucao.dgi.l3.exception.RegleMetierException;
 import com.ucao.dgi.l3.exception.RessourceIntrouvableException;
 import com.ucao.dgi.l3.repository.PersonnelRepository;
+import com.ucao.dgi.l3.repository.UserRepository;
 import com.ucao.dgi.l3.service.PersonnelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -18,6 +19,7 @@ import java.util.List;
 public class PersonnelServiceImpl implements PersonnelService {
 
     private final PersonnelRepository personnelRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,12 +57,24 @@ public class PersonnelServiceImpl implements PersonnelService {
         p.setSalaire(donnees.getSalaire());
         p.setDateEmbauche(donnees.getDateEmbauche());
         p.setActif(donnees.getActif() == null || donnees.getActif());
+        // le compte de connexion éventuel suit la fiche
+        userRepository.findByPersonnelIdPersonnel(id).ifPresent(compte -> {
+            if (!"LIVREUR".equals(p.getFonction())) {
+                throw new RegleMetierException("Cet employé a un accès livreur : supprimez-le avant de changer sa fonction");
+            }
+            compte.setNom(p.getNom());
+            compte.setPrenom(p.getPrenom());
+            compte.setTelephone(p.getTelephone());
+        });
         return p;
     }
 
     @Override
     public void delete(Integer id) {
-        personnelRepository.delete(findById(id));
+        Personnel p = findById(id);
+        // l'accès livreur éventuel disparaît avec la fiche (même transaction)
+        userRepository.findByPersonnelIdPersonnel(id).ifPresent(userRepository::delete);
+        personnelRepository.delete(p);
         personnelRepository.flush(); // remonte immédiatement une éventuelle violation de clé étrangère
     }
 

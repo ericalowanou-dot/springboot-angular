@@ -34,7 +34,13 @@ public final class CommandeDtos {
     public record PaiementRequest(@NotBlank(message = "Le moyen de paiement est obligatoire") String methode) {
     }
 
-    public record LivraisonUpdateRequest(Integer livreurId, StatutLivraison statut) {
+    public record LivraisonUpdateRequest(Integer livreurId, StatutLivraison statut, @Size(max = 255) String motif) {
+    }
+
+    /** Déclaration d'échec par le livreur : motif obligatoire, commentaire libre. */
+    public record EchecRequest(
+            @NotBlank(message = "Indiquez le motif de l'échec") @Size(max = 120) String motif,
+            @Size(max = 130) String commentaire) {
     }
 
     public record LigneApproRequest(

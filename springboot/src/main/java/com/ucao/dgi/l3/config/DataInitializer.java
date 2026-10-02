@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -56,29 +57,46 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        mettreAJourContrainteRole();
+        mettreAJourContraintes();
         new TransactionTemplate(transactionManager).executeWithoutResult(statut -> initialiser());
     }
 
     /**
-     * Une base créée par une version précédente garde une contrainte CHECK sur users.role qui ne connaît
-     * pas les nouveaux rôles (Hibernate ne met jamais à jour ces contraintes) : on la recrée avec la liste
-     * actuelle. Exécuté hors transaction pour qu'un échec n'empêche pas le démarrage.
+     * Une base créée par une version précédente garde des contraintes CHECK sur les colonnes d'énumération
+     * (rôles, statuts…) qui ignorent les nouvelles valeurs : Hibernate ne les met jamais à jour. On les
+     * recrée avec les valeurs actuelles. Exécuté hors transaction : un échec n'empêche pas le démarrage.
      */
-    private void mettreAJourContrainteRole() {
-        String roles = Arrays.stream(User.Role.values())
-                .map(r -> "'" + r.name() + "'")
-                .collect(Collectors.joining(","));
+    private void mettreAJourContraintes() {
+        contrainte("users", "role", User.Role.values());
+        contrainte("livraison", "statut", StatutLivraison.values());
+        contrainte("rad_commande", "statut", StatutCommande.values());
+        contrainte("rad_commande", "type", TypeCommande.values());
+    }
+
+    private void contrainte(String table, String colonne, Enum<?>[] valeurs) {
+        String nom = table + "_" + colonne + "_check";
+        String liste = Arrays.stream(valeurs).map(v -> "'" + v.name() + "'").collect(Collectors.joining(","));
         try {
-            jdbcTemplate.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
-            jdbcTemplate.execute("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN (" + roles + "))");
+            // H2 (développement) stocke ces colonnes dans un type ENUM figé : on repasse en texte
+            if (estH2()) {
+                jdbcTemplate.execute("ALTER TABLE " + table + " ALTER COLUMN " + colonne + " SET DATA TYPE VARCHAR(20)");
+            }
+            jdbcTemplate.execute("ALTER TABLE " + table + " DROP CONSTRAINT IF EXISTS " + nom);
+            jdbcTemplate.execute("ALTER TABLE " + table + " ADD CONSTRAINT " + nom
+                    + " CHECK (" + colonne + " IN (" + liste + "))");
         } catch (DataAccessException e) {
-            log.warn("Contrainte users_role_check non mise à jour : {}", e.getMostSpecificCause().getMessage());
+            log.warn("Contrainte {} non mise à jour : {}", nom, e.getMostSpecificCause().getMessage());
         }
     }
 
+    private boolean estH2() {
+        String produit = jdbcTemplate.execute((ConnectionCallback<String>) c -> c.getMetaData().getDatabaseProductName());
+        return produit != null && produit.toUpperCase().contains("H2");
+    }
+
     private void initialiser() {
-        if (userRepository.count() == 0) {
+        boolean baseNeuve = userRepository.count() == 0;
+        if (baseNeuve) {
             creerUtilisateur(adminEmail, adminPassword, "Principal", "Admin", User.Role.ADMIN);
             log.info("Compte administrateur créé : {}", adminEmail);
             if (demoData) {
@@ -89,6 +107,19 @@ public class DataInitializer implements CommandLineRunner {
         if (demoData && categorieRepository.count() == 0 && platRepository.count() == 0) {
             insererDemo();
             log.info("Données de démonstration insérées");
+        }
+        // compte livreur de démonstration, uniquement lors de la toute première initialisation
+        if (baseNeuve && demoData) {
+            personnelRepository.findAllByFonctionIgnoreCase("LIVREUR").stream().findFirst().ifPresent(livreur ->
+                    userRepository.save(User.builder()
+                            .email("livreur@restaurant.com")
+                            .password(passwordEncoder.encode("livreur123"))
+                            .nom(livreur.getNom())
+                            .prenom(livreur.getPrenom())
+                            .telephone(livreur.getTelephone())
+                            .role(User.Role.LIVREUR)
+                            .personnel(livreur)
+                            .build()));
         }
     }
 
@@ -212,6 +243,10 @@ public class DataInitializer implements CommandLineRunner {
                         liv.setStatut(StatutLivraison.LIVREE);
                         liv.setLivreur(random.nextBoolean() ? livreur1 : livreur2);
                         liv.setDateLivraison(date);
+                        liv.setHeureFin(c.getCreeLe().plusMinutes(40));
+                    } else if (i % 2 == 0) {
+                        liv.setStatut(StatutLivraison.ASSIGNEE);
+                        liv.setLivreur(livreur1);
                     } else {
                         liv.setStatut(StatutLivraison.A_ASSIGNER);
                     }
