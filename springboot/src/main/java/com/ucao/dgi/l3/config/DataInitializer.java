@@ -7,14 +7,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * Au démarrage :
@@ -37,6 +42,8 @@ public class DataInitializer implements CommandLineRunner {
     private final ProduitRepository produitRepository;
     private final CommandeRepository commandeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
+    private final PlatformTransactionManager transactionManager;
 
     @Value("${app.admin.email}")
     private String adminEmail;
@@ -48,8 +55,29 @@ public class DataInitializer implements CommandLineRunner {
     private boolean demoData;
 
     @Override
-    @Transactional
     public void run(String... args) {
+        mettreAJourContrainteRole();
+        new TransactionTemplate(transactionManager).executeWithoutResult(statut -> initialiser());
+    }
+
+    /**
+     * Une base créée par une version précédente garde une contrainte CHECK sur users.role qui ne connaît
+     * pas les nouveaux rôles (Hibernate ne met jamais à jour ces contraintes) : on la recrée avec la liste
+     * actuelle. Exécuté hors transaction pour qu'un échec n'empêche pas le démarrage.
+     */
+    private void mettreAJourContrainteRole() {
+        String roles = Arrays.stream(User.Role.values())
+                .map(r -> "'" + r.name() + "'")
+                .collect(Collectors.joining(","));
+        try {
+            jdbcTemplate.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+            jdbcTemplate.execute("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN (" + roles + "))");
+        } catch (DataAccessException e) {
+            log.warn("Contrainte users_role_check non mise à jour : {}", e.getMostSpecificCause().getMessage());
+        }
+    }
+
+    private void initialiser() {
         if (userRepository.count() == 0) {
             creerUtilisateur(adminEmail, adminPassword, "Principal", "Admin", User.Role.ADMIN);
             log.info("Compte administrateur créé : {}", adminEmail);
